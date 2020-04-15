@@ -18,3 +18,4 @@ target/*
 *.tmp
 *.temp
 /.settings/
+/.project

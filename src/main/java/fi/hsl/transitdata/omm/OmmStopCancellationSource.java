@@ -70,7 +70,7 @@ public class OmmStopCancellationSource {
                 String existsFromDate = resultSet.getString("SD_VALID_FROM");
                 String existsUpToDate = resultSet.getString("SD_VALID_TO");
                 String description = resultSet.getString("B_DESCRIPTION");
-                stopCancellations.add(new StopCancellation(stopId, stopDeviationsid, description, existsFromDate, existsUpToDate));
+                stopCancellations.add(new StopCancellation(stopId, stopDeviationsid, description, existsFromDate, existsUpToDate, timezone));
             } catch (IllegalArgumentException iae) {
                 log.error("Error while parsing the stopCancellation resultset", iae);
             }
