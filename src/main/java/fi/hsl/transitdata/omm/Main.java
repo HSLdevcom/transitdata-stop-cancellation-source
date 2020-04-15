@@ -33,13 +33,14 @@ public class Main {
 
             final PulsarApplication app = PulsarApplication.newInstance(config);
             final PulsarApplicationContext context = app.getContext();
+            final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, doiConnString);
             final OmmStopCancellationSource omm = OmmStopCancellationSource.newInstance(context, ommConnString);
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
             final int pollIntervalInSeconds = config.getInt("omm.interval");
 
             scheduler.scheduleAtFixedRate(() -> {
                 try {
-                    List<StopCancellation> stopCancellations = omm.queryAndProcessResults();
+                    List<StopCancellation> stopCancellations = omm.queryAndProcessResults(doiStops.getStopInfo());
                     publisher.sendStopCancellations(stopCancellations);
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);
