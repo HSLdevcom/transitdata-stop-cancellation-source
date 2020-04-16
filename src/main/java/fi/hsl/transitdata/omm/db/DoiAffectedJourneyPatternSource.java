@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class DoiAffectedJourneyPatternSource {
 
-    private static final Logger log = LoggerFactory.getLogger(OmmStopCancellationSource.class);
+    private static final Logger log = LoggerFactory.getLogger(DoiAffectedJourneyPatternSource.class);
     private final Connection dbConnection;
     private final String queryString;
     private final String timeZone;
@@ -60,17 +60,12 @@ public class DoiAffectedJourneyPatternSource {
                 String stopName = resultSet.getString("SP_Name");
                 int stopSequence = resultSet.getInt("PIJP_SequenceNumber");
                 AffectedJourneyPatternStop stop = new AffectedJourneyPatternStop(stopGid, stopId, stopName, stopSequence);
-
                 long jpId = resultSet.getLong("JP_Id");
-                int jpPointCount = resultSet.getInt("JP_PointCount");
-                AffectedJourneyPattern affectedJourneyPattern;
-                if (affectedJourneyPatterns.containsKey(jpId)) {
-                    affectedJourneyPattern = affectedJourneyPatterns.get(jpId);
-                } else {
-                    affectedJourneyPattern = new AffectedJourneyPattern(jpId, jpPointCount);
+                if (!affectedJourneyPatterns.containsKey(jpId)) {
+                    int jpPointCount = resultSet.getInt("JP_PointCount");
+                    affectedJourneyPatterns.put(jpId, new AffectedJourneyPattern(jpId, jpPointCount));
                 }
-                affectedJourneyPattern.addStop(stop);
-                affectedJourneyPatterns.put(jpId, affectedJourneyPattern);
+                affectedJourneyPatterns.get(jpId).addStop(stop);
             } catch (IllegalArgumentException iae) {
                 log.error("Error while parsing the affected journey patterns resultset", iae);
             }

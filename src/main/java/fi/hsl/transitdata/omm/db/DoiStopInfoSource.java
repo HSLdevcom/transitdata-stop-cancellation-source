@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class DoiStopInfoSource {
 
-    private static final Logger log = LoggerFactory.getLogger(OmmStopCancellationSource.class);
+    private static final Logger log = LoggerFactory.getLogger(DoiStopInfoSource.class);
     private final Connection dbConnection;
     private final String queryString;
     private final String timeZone;

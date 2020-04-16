@@ -15,8 +15,10 @@ import fi.hsl.common.config.ConfigUtils;
 import fi.hsl.common.pulsar.PulsarApplication;
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.omm.db.DoiAffectedJourneyPatternSource;
+import fi.hsl.transitdata.omm.db.DoiAffectedJourneySource;
 import fi.hsl.transitdata.omm.db.DoiStopInfoSource;
 import fi.hsl.transitdata.omm.db.OmmStopCancellationSource;
+import fi.hsl.transitdata.omm.models.AffectedJourney;
 import fi.hsl.transitdata.omm.models.AffectedJourneyPattern;
 import fi.hsl.transitdata.omm.models.StopCancellation;
 import org.apache.pulsar.client.api.PulsarClientException;
@@ -41,12 +43,14 @@ public class Main {
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, doiConnString);
             final OmmStopCancellationSource omm = OmmStopCancellationSource.newInstance(context, ommConnString);
             final DoiAffectedJourneyPatternSource doiJourneyPatterns = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
+            final DoiAffectedJourneySource doiAffectedJourneys = DoiAffectedJourneySource.newInstance(context, doiConnString);
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
             scheduler.scheduleAtFixedRate(() -> {
                 try {
                     List<StopCancellation> stopCancellations = omm.queryAndProcessResults(doiStops.getStopInfo());
                     Map<Long, AffectedJourneyPattern> affectedJourneyPatterns = doiJourneyPatterns.queryAndProcessResults(stopCancellations);
+                    Map<Long, List<AffectedJourney>> affectedJourneys = doiAffectedJourneys.queryAndProcessResults();
                     publisher.sendStopCancellations(stopCancellations);
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);
