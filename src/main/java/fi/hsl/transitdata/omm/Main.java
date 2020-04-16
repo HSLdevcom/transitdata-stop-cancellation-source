@@ -2,6 +2,7 @@ package fi.hsl.transitdata.omm;
 
 import java.io.File;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -50,7 +51,7 @@ public class Main {
                 try {
                     List<StopCancellation> stopCancellations = omm.queryAndProcessResults(doiStops.getStopInfo());
                     Map<Long, AffectedJourneyPattern> affectedJourneyPatterns = doiJourneyPatterns.queryAndProcessResults(stopCancellations);
-                    Map<Long, List<AffectedJourney>> affectedJourneys = doiAffectedJourneys.queryAndProcessResults();
+                    Map<Long, List<AffectedJourney>> affectedJourneys = doiAffectedJourneys.queryAndProcessResults(new ArrayList<>(affectedJourneyPatterns.keySet()));
                     publisher.sendStopCancellations(stopCancellations);
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);

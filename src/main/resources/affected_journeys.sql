@@ -18,7 +18,7 @@ SELECT DISTINCT CONVERT(CHAR(16), DVJ.Id) AS DVJ_Id,
     WHERE (KT.Name = 'JoreIdentity' OR KT.Name = 'JoreRouteIdentity' OR KT.Name = 'RouteName' )
     AND OT.Name = 'VehicleJourney'
     AND VJT.IsWorkedOnDirectionOfLineGid IS NOT NULL
-    AND DVJ.OperatingDayDate >= '2020-04-16'
-    AND DVJ.OperatingDayDate < '2020-05-16'
+    AND DVJ.OperatingDayDate >= 'VAR_FROM_DATE'
+    AND DVJ.OperatingDayDate < 'VAR_TO_DATE'
     AND DVJ.IsReplacedById IS NULL
-    AND JP.Id IN (7990000008183516,7990000008194194);
+    AND JP.Id IN (VAR_AFFECTED_JP_IDS);

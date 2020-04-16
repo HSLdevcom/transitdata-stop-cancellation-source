@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DoiAffectedJourneySource {
 
@@ -15,11 +16,14 @@ public class DoiAffectedJourneySource {
     private final Connection dbConnection;
     private final String queryString;
     private final String timeZone;
+    private final int queryFutureInDays;
 
     private DoiAffectedJourneySource(PulsarApplicationContext context, Connection connection) {
         dbConnection = connection;
         queryString = QueryUtils.createQuery(getClass(),"/affected_journeys.sql");
         timeZone = context.getConfig().getString("omm.timezone");
+        queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
+        log.info("Using {} future days in querying affected journeys", queryFutureInDays);
     }
 
     public static DoiAffectedJourneySource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
@@ -27,10 +31,16 @@ public class DoiAffectedJourneySource {
         return new DoiAffectedJourneySource(context, connection);
     }
 
-    public Map<Long, List<AffectedJourney>> queryAndProcessResults() throws SQLException {
+    public Map<Long, List<AffectedJourney>> queryAndProcessResults(List<Long> affectedJourneyPatterns) throws SQLException {
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
+        String dateThen = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
+        String affectedJourneyPatternIds = affectedJourneyPatterns.stream().map(String::valueOf).collect(Collectors.joining(","));
+        String preparedString = queryString
+                .replace("VAR_FROM_DATE", dateNow)
+                .replace("VAR_TO_DATE", dateThen)
+                .replace("VAR_AFFECTED_JP_IDS", affectedJourneyPatternIds);
         log.info("Querying affected journeys from database");
-        try (PreparedStatement statement = dbConnection.prepareStatement(queryString)) {
+        try (PreparedStatement statement = dbConnection.prepareStatement(preparedString)) {
             ResultSet resultSet = statement.executeQuery();
             return parseJourneys(resultSet);
         }

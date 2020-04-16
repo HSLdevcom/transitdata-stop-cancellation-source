@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 public class QueryUtils {
     private static final Logger log = LoggerFactory.getLogger(QueryUtils.class);
@@ -26,4 +28,10 @@ public class QueryUtils {
         return DateTimeFormatter.ofPattern("yyyy-MM-dd").format(instant.atZone(ZoneId.of(zoneId)));
     }
 
+    public static String getOffsetDateAsString(Instant instant, String zoneId, int offsetInDays) {
+        ZonedDateTime then = instant.atZone(ZoneId.of(zoneId)).plus(offsetInDays, ChronoUnit.DAYS);
+        String formattedString = DateTimeFormatter.ISO_LOCAL_DATE.format(then);
+        log.debug("offsetInDays results to date " + formattedString);
+        return formattedString;
+    }
 }
