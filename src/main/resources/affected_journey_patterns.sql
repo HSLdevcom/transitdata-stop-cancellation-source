@@ -1,4 +1,4 @@
-  SELECT JP.Id AS JP_Id,
+SELECT JP.Id AS JP_Id,
     JP.PointCount AS JP_PointCount,
     PIJP.Id AS PJP_Id,
     PIJP.IsInJourneyPatternId AS PIJP_IsInJourneyPatternId,
@@ -11,18 +11,13 @@
     LEFT JOIN ptDOI4_Community.dbo.doi4_PointInJourneyPattern AS PIJP ON PIJP.IsInJourneyPatternId = JP.Id
     LEFT JOIN ptDOI4_Community.dbo.StopPoint AS SP on SP.IsJourneyPatternPointGid = PIJP.IsJourneyPatternPointGid
     LEFT JOIN ptDOI4_Community.dbo.JourneyPatternPoint AS JPP ON JPP.Gid = SP.IsJourneyPatternPointGid
-    WHERE (SP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR SP.ExistsUptoDate IS NULL)
-    AND (JPP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR JPP.ExistsUptoDate IS NULL)
-    AND JP.Id IN (
+    INNER JOIN (
         SELECT JP.Id
             FROM ptDOI4_Community.dbo.JourneyPattern AS JP
             LEFT JOIN ptDOI4_Community.dbo.PointInJourneyPattern as PIJP ON PIJP.IsInJourneyPatternId = JP.Id
             LEFT JOIN ptDOI4_Community.dbo.JourneyPatternPoint AS JPP ON JPP.Gid = PIJP.IsJourneyPatternPointGid
             LEFT JOIN ptDOI4_Community.dbo.StopPoint AS SP ON SP.IsJourneyPatternPointGid = JPP.Gid
-            WHERE (JPP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR JPP.ExistsUptoDate IS NULL)
-            AND (SP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR SP.ExistsUptoDate IS NULL)
-            AND SP.Gid IN (9022301450011001, 9022301150004002, 9022301160004002)
-            AND JP.Id IN (
+            INNER JOIN (
                 SELECT DISTINCT(JP.Id)
                     FROM ptDOI4_Community.dbo.DatedVehicleJourney AS DVJ
                     LEFT JOIN ptDOI4_Community.dbo.TimedJourneyPattern AS TJP ON TJP.Id = DVJ.UsesTimedJourneyPatternId
@@ -38,6 +33,11 @@
                     AND OT.Name = 'VehicleJourney'
                     AND VJT.IsWorkedOnDirectionOfLineGid IS NOT NULL
                     AND DVJ.IsReplacedById IS NULL
-            )
-    )
+            ) ACTIVE_JPS ON ACTIVE_JPS.Id = JP.Id
+            WHERE (JPP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR JPP.ExistsUptoDate IS NULL)
+            AND (SP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR SP.ExistsUptoDate IS NULL)
+            AND SP.Gid IN (9022301450011001, 9022301150004002, 9022301160004002)
+    ) AFFECTED_ACTIVE_JPS ON AFFECTED_ACTIVE_JPS.Id = JP.Id
+    WHERE (SP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR SP.ExistsUptoDate IS NULL)
+    AND (JPP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR JPP.ExistsUptoDate IS NULL)
     ORDER BY JP.Id, PIJP_SequenceNumber;
