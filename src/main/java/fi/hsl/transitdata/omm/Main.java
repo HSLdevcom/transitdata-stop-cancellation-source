@@ -3,6 +3,7 @@ package fi.hsl.transitdata.omm;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,6 +14,7 @@ import fi.hsl.common.config.ConfigParser;
 import fi.hsl.common.config.ConfigUtils;
 import fi.hsl.common.pulsar.PulsarApplication;
 import fi.hsl.common.pulsar.PulsarApplicationContext;
+import fi.hsl.transitdata.omm.models.AffectedJourneyPattern;
 import fi.hsl.transitdata.omm.models.StopCancellation;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
@@ -27,20 +29,21 @@ public class Main {
 
         try {
             final Config config = ConfigParser.createConfig();
-
             final String ommConnString = readConnString("OMM_CONNECTION_STRING", "omm_conn_string");
             final String doiConnString = readConnString("DOI_CONNECTION_STRING", "doi_conn_string");
-
+            final int pollIntervalInSeconds = config.getInt("omm.interval");
             final PulsarApplication app = PulsarApplication.newInstance(config);
             final PulsarApplicationContext context = app.getContext();
+
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, doiConnString);
             final OmmStopCancellationSource omm = OmmStopCancellationSource.newInstance(context, ommConnString);
+            final DoiAffectedJourneyPatternSource doiJourneyPatterns = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
-            final int pollIntervalInSeconds = config.getInt("omm.interval");
 
             scheduler.scheduleAtFixedRate(() -> {
                 try {
                     List<StopCancellation> stopCancellations = omm.queryAndProcessResults(doiStops.getStopInfo());
+                    Map<Long, AffectedJourneyPattern> affectedJourneyPatterns = doiJourneyPatterns.queryAndProcessResults(stopCancellations);
                     publisher.sendStopCancellations(stopCancellations);
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);

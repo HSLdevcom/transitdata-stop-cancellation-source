@@ -1,17 +1,13 @@
 package fi.hsl.transitdata.omm;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
-import fi.hsl.common.files.FileUtils;
 import fi.hsl.transitdata.omm.models.Stop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fi.hsl.transitdata.omm.models.StopCancellation;
 
-import java.io.InputStream;
 import java.sql.*;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +21,7 @@ public class OmmStopCancellationSource {
 
     private OmmStopCancellationSource(PulsarApplicationContext context, Connection connection) {
         dbConnection = connection;
-        queryString = createQuery("/stop_cancellations.sql");
+        queryString = QueryUtils.createQuery(getClass() ,"/stop_cancellations.sql");
         timezone = context.getConfig().getString("omm.timezone");
     }
 
@@ -34,22 +30,8 @@ public class OmmStopCancellationSource {
         return new OmmStopCancellationSource(context, connection);
     }
 
-    private String createQuery(String resourceFileName) {
-        try {
-            InputStream stream = getClass().getResourceAsStream(resourceFileName);
-            return FileUtils.readFileFromStreamOrThrow(stream);
-        } catch (Exception e) {
-            log.error("Error in reading sql from file:", e);
-            return null;
-        }
-    }
-
-    static String localDateAsString(Instant instant, String zoneId) {
-        return DateTimeFormatter.ofPattern("yyyy-MM-dd").format(instant.atZone(ZoneId.of(zoneId)));
-    }
-
     public List<StopCancellation> queryAndProcessResults(Map<Long, Stop> stopInfo) throws SQLException {
-        String dateNow = localDateAsString(Instant.now(), timezone);
+        String dateNow = QueryUtils.localDateAsString(Instant.now(), timezone);
         log.info("Querying stopCancellations from database");
         try (PreparedStatement statement = dbConnection.prepareStatement(queryString)) {
             statement.setString(1, dateNow);
@@ -64,7 +46,7 @@ public class OmmStopCancellationSource {
 
     private List<StopCancellation> parseStopCancellations(ResultSet resultSet, Map<Long, Stop> stopInfo) throws SQLException {
         List<StopCancellation> stopCancellations = new ArrayList<>();
-        log.info("Processing results");
+        log.info("Processing stopCancellations resultset");
         while (resultSet.next()) {
             try {
                 long stopGid = resultSet.getLong("SC_STOP_ID");
