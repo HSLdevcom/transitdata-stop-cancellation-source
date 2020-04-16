@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm;
+package fi.hsl.transitdata.omm.db;
 
 import fi.hsl.common.files.FileUtils;
 import org.slf4j.Logger;
@@ -10,7 +10,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class QueryUtils {
-    private static final Logger log = LoggerFactory.getLogger(OmmStopCancellationSource.class);
+    private static final Logger log = LoggerFactory.getLogger(QueryUtils.class);
 
     public static String createQuery(Class c, String resourceFileName) {
         try {

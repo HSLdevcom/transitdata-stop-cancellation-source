@@ -28,16 +28,16 @@ SELECT JP.Id AS JP_Id,
                     LEFT JOIN ptDOI4_Community.dbo.KeyVariantType AS KVT ON (KVT.Id = KVV.IsOfKeyVariantTypeId)
                     LEFT JOIN ptDOI4_Community.dbo.KeyType AS KT ON (KT.Id = KVT.IsForKeyTypeId)
                     LEFT JOIN ptDOI4_Community.dbo.ObjectType AS OT ON (KT.ExtendsObjectTypeNumber = OT.Number)
-                    WHERE DVJ.OperatingDayDate >= CAST(CURRENT_TIMESTAMP AS DATE)
+                    WHERE DVJ.OperatingDayDate >= VAR_DATE_NOW
                     AND (KT.Name = 'JoreIdentity' OR KT.Name = 'JoreRouteIdentity' OR KT.Name = 'RouteName' )
                     AND OT.Name = 'VehicleJourney'
                     AND VJT.IsWorkedOnDirectionOfLineGid IS NOT NULL
                     AND DVJ.IsReplacedById IS NULL
             ) ACTIVE_JPS ON ACTIVE_JPS.Id = JP.Id
-            WHERE (JPP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR JPP.ExistsUptoDate IS NULL)
-            AND (SP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR SP.ExistsUptoDate IS NULL)
-            AND SP.Gid IN (9022301450011001, 9022301150004002, 9022301160004002)
+            WHERE (JPP.ExistsUptoDate >= VAR_DATE_NOW OR JPP.ExistsUptoDate IS NULL)
+            AND (SP.ExistsUptoDate >= VAR_DATE_NOW OR SP.ExistsUptoDate IS NULL)
+            AND SP.Gid IN (VAR_AFFECTED_STOP_GIDS)
     ) AFFECTED_ACTIVE_JPS ON AFFECTED_ACTIVE_JPS.Id = JP.Id
-    WHERE (SP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR SP.ExistsUptoDate IS NULL)
-    AND (JPP.ExistsUptoDate >= CAST(CURRENT_TIMESTAMP AS DATE) OR JPP.ExistsUptoDate IS NULL)
+    WHERE (SP.ExistsUptoDate >= VAR_DATE_NOW OR SP.ExistsUptoDate IS NULL)
+    AND (JPP.ExistsUptoDate >= VAR_DATE_NOW OR JPP.ExistsUptoDate IS NULL)
     ORDER BY JP.Id, PIJP_SequenceNumber;

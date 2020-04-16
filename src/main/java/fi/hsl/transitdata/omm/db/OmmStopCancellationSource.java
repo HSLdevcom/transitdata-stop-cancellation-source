@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm;
+package fi.hsl.transitdata.omm.db;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.omm.models.Stop;
@@ -58,8 +58,8 @@ public class OmmStopCancellationSource {
                     String existsFromDate = resultSet.getString("SD_VALID_FROM");
                     String existsUpToDate = resultSet.getString("SD_VALID_TO");
                     String description = resultSet.getString("B_DESCRIPTION");
-                    stopCancellations.add(new StopCancellation(stopId, stopName, stopDeviationsid, description, existsFromDate, existsUpToDate, timezone));
-                    log.info("Processing cancelled stop {} ({}) with cancellation info: {}", stopName, stopId, description);
+                    stopCancellations.add(new StopCancellation(stopId, stopGid, stopName, stopDeviationsid, description, existsFromDate, existsUpToDate, timezone));
+                    log.info("Reading cancelled stop {} ({}) with cancellation info: {}", stopName, stopId, description);
                 } else {
                     log.error("Could not find stop info for cancelled stop (gid: {})", stopGid);
                 }
@@ -67,6 +67,7 @@ public class OmmStopCancellationSource {
                 log.error("Error while parsing the stopCancellation resultset", iae);
             }
         }
+        log.info("Found {} stop cancellations", stopCancellations.size());
         return stopCancellations;
     }
 }

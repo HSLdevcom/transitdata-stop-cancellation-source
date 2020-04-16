@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm;
+package fi.hsl.transitdata.omm.db;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.omm.models.Stop;
@@ -64,6 +64,7 @@ public class DoiStopInfoSource {
                 log.error("Error while parsing the stop resultset", iae);
             }
         }
+        log.info("Found total {} stops", map.size());
         return map;
     }
 

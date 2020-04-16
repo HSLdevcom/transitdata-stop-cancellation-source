@@ -3,6 +3,7 @@ package fi.hsl.transitdata.omm;
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.common.transitdata.TransitdataProperties;
 import fi.hsl.common.transitdata.proto.InternalMessages;
+import fi.hsl.transitdata.omm.db.OmmStopCancellationSource;
 import fi.hsl.transitdata.omm.models.StopCancellation;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
@@ -19,7 +20,6 @@ public class StopCancellationPublisher {
     private static final Logger log = LoggerFactory.getLogger(OmmStopCancellationSource.class);
     private Producer<byte[]> producer;
     private String timeZone;
-
 
     public StopCancellationPublisher(PulsarApplicationContext context) {
         producer = context.getProducer();

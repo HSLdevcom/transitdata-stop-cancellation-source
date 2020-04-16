@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm;
+package fi.hsl.transitdata.omm.db;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.omm.models.AffectedJourneyPattern;
@@ -12,18 +12,19 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DoiAffectedJourneyPatternSource {
 
     private static final Logger log = LoggerFactory.getLogger(OmmStopCancellationSource.class);
     private final Connection dbConnection;
     private final String queryString;
-    private final String timezone;
+    private final String timeZone;
 
     private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection) {
         dbConnection = connection;
         queryString = QueryUtils.createQuery(getClass(), "/affected_journey_patterns.sql");
-        timezone = context.getConfig().getString("omm.timezone");
+        timeZone = context.getConfig().getString("omm.timezone");
     }
 
     public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
@@ -32,9 +33,14 @@ public class DoiAffectedJourneyPatternSource {
     }
 
     public Map<Long, AffectedJourneyPattern> queryAndProcessResults(List<StopCancellation> stopCancellations) throws SQLException {
-        String dateNow = QueryUtils.localDateAsString(Instant.now(), timezone);
         log.info("Querying affected journey patterns from database");
-        try (PreparedStatement statement = dbConnection.prepareStatement(queryString)) {
+        String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
+        String affectedStops = stopCancellations.stream().map(sc -> String.valueOf(sc.stopGid)).collect(Collectors.joining(","));
+        String preparedQueryString = queryString
+                .replaceAll("VAR_DATE_NOW", "'"+dateNow+"'")
+                .replace("VAR_AFFECTED_STOP_GIDS", affectedStops);
+
+        try (PreparedStatement statement = dbConnection.prepareStatement(preparedQueryString)) {
             ResultSet resultSet = statement.executeQuery();
             return parseAffectedJourneyPatterns(resultSet);
         }
@@ -69,6 +75,7 @@ public class DoiAffectedJourneyPatternSource {
                 log.error("Error while parsing the affected journey patterns resultset", iae);
             }
         }
+        log.info("found {} affected journey patterns", affectedJourneyPatterns.size());
         return affectedJourneyPatterns;
     }
 }
