@@ -44,15 +44,11 @@ public class StopCancellation {
         return dt.atZone(zone).toInstant().toEpochMilli();
     }
 
-    public InternalMessages.StopCancellation getAsProtoBuf() {
-        InternalMessages.StopCancellation.Builder builder = InternalMessages.StopCancellation.newBuilder();
+    public InternalMessages.StopCancellations.StopCancellation getAsProtoBuf() {
+        InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
         builder.setStopId(String.valueOf(stopId));
-        if (existsFromDate.isPresent()) {
-            builder.setValidFromUtcMs(toUtcEpochMs(existsFromDate.get()));
-        }
-        if (existsUpToDate.isPresent()) {
-            builder.setValidToUtcMs(toUtcEpochMs(existsUpToDate.get()));
-        }
+        existsFromDate.ifPresent(localDateTime -> builder.setValidFromUtcMs(toUtcEpochMs(localDateTime)));
+        existsUpToDate.ifPresent(localDateTime -> builder.setValidToUtcMs(toUtcEpochMs(localDateTime)));
         return builder.build();
     }
 
