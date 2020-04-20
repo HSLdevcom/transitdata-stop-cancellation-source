@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class StopCancellation {
 
@@ -55,6 +56,9 @@ public class StopCancellation {
         builder.setStopId(String.valueOf(stopId));
         existsFromDate.ifPresent(localDateTime -> builder.setValidFromUtcMs(toUtcEpochMs(localDateTime)));
         existsUpToDate.ifPresent(localDateTime -> builder.setValidToUtcMs(toUtcEpochMs(localDateTime)));
+        if (!affectedJourneyPatternIds.isEmpty()) {
+            builder.addAllAffectedJourneyPatternIds(affectedJourneyPatternIds.stream().map(String::valueOf).collect(Collectors.toList()));
+        }
         return builder.build();
     }
 

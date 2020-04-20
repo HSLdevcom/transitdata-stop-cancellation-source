@@ -55,7 +55,7 @@ public class Main {
                     Map<Long, List<AffectedJourney>> affectedJourneyMap = doiAffectedJourneys.queryAndProcessResults(new ArrayList<>(affectedJourneyPatternMap.keySet()));
                     StopCancellationUtils.addAffectedJourneysToJourneyPatterns(affectedJourneyPatternMap, affectedJourneyMap);
                     StopCancellationUtils.addAffectedJourneyPatternsToStopCancellations(stopCancellations, affectedJourneyPatternMap);
-                    publisher.sendStopCancellations(stopCancellations);
+                    publisher.sendStopCancellations(stopCancellations, new ArrayList<AffectedJourneyPattern>(affectedJourneyPatternMap.values()));
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);
                     closeApplication(app, scheduler);

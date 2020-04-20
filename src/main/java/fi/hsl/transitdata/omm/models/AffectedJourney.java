@@ -1,5 +1,7 @@
 package fi.hsl.transitdata.omm.models;
 
+import fi.hsl.common.transitdata.proto.InternalMessages;
+
 public class AffectedJourney {
 
     private final String tripId;
@@ -16,6 +18,17 @@ public class AffectedJourney {
         this.direction = direction;
         this.startTime = startTime;
         this.journeyPatternId = journeyPatternId;
+    }
+
+    public InternalMessages.TripInfo getAsProtoBuf() {
+        InternalMessages.TripInfo.Builder builder = InternalMessages.TripInfo.newBuilder();
+        builder.setTripId(tripId);
+        builder.setOperatingDay(operatingDay);
+        builder.setRouteId(routeName);
+        builder.setDirectionId(direction);
+        builder.setStartTime(startTime);
+        builder.setScheduleType(InternalMessages.TripInfo.ScheduleType.SCHEDULED);
+        return builder.build();
     }
 
 }
