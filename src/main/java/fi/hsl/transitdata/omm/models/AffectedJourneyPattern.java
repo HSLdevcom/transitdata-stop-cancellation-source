@@ -11,19 +11,19 @@ import java.util.stream.Collectors;
 
 public class AffectedJourneyPattern {
 
-    public final long id;
+    public final String id;
     private final int stopCount;
-    private final Map<Long, AffectedJourneyPatternStop> stops;
+    private final Map<String, AffectedJourneyPatternStop> stops;
     private final List<AffectedJourney> affectedJourneys;
 
-    public AffectedJourneyPattern(long id, int stopCount) {
+    public AffectedJourneyPattern(String id, int stopCount) {
         this.id = id;
         this.stopCount = stopCount;
         this.stops = new HashMap<>();
         this.affectedJourneys = new ArrayList<>();
     }
 
-    public List<Long> getStopIds(){
+    public List<String> getStopIds(){
         return new ArrayList<>(stops.keySet());
     }
 
@@ -39,7 +39,7 @@ public class AffectedJourneyPattern {
 
     public InternalMessages.JourneyPattern getAsProtoBuf() {
         InternalMessages.JourneyPattern.Builder builder = InternalMessages.JourneyPattern.newBuilder();
-        builder.setJourneyPatternId(String.valueOf(id));
+        builder.setJourneyPatternId(id);
         builder.addAllStops(stops.values().stream().map(AffectedJourneyPatternStop::getAsProtoBuf).collect(Collectors.toList()));
         if (!affectedJourneys.isEmpty()) {
             builder.addAllTrips(affectedJourneys.stream().map(AffectedJourney::getAsProtoBuf).collect(Collectors.toList()));

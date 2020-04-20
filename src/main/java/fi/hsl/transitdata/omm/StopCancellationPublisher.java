@@ -37,7 +37,7 @@ public class StopCancellationPublisher {
     }
 
     private void sendStopCancellations(InternalMessages.StopCancellations message, long timestamp) throws PulsarClientException {
-        log.info("Sending {} stop cancellations", message.getStopCancellationsCount());
+        log.info("Sending {} stop cancellations for {} affected journey patterns", message.getStopCancellationsCount(), message.getAffectedJourneyPatternsCount());
         try {
             producer.newMessage().value(message.toByteArray())
                     .eventTime(timestamp)

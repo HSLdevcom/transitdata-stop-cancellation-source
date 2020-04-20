@@ -30,7 +30,7 @@ public class OmmStopCancellationSource {
         return new OmmStopCancellationSource(context, connection);
     }
 
-    public List<StopCancellation> queryAndProcessResults(Map<Long, Stop> stopInfo) throws SQLException {
+    public List<StopCancellation> queryAndProcessResults(Map<String, Stop> stopInfo) throws SQLException {
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timezone);
         log.info("Querying stopCancellations from database");
         try (PreparedStatement statement = dbConnection.prepareStatement(queryString)) {
@@ -44,22 +44,22 @@ public class OmmStopCancellationSource {
         }
     }
 
-    private List<StopCancellation> parseStopCancellations(ResultSet resultSet, Map<Long, Stop> stopInfo) throws SQLException {
+    private List<StopCancellation> parseStopCancellations(ResultSet resultSet, Map<String, Stop> stopInfo) throws SQLException {
         List<StopCancellation> stopCancellations = new ArrayList<>();
         log.info("Processing stopCancellations resultset");
         while (resultSet.next()) {
             try {
-                long stopGid = resultSet.getLong("SC_STOP_ID");
+                String stopGid = resultSet.getString("SC_STOP_ID");
                 if (stopInfo.containsKey(stopGid)) {
                     Stop stop = stopInfo.get(stopGid);
-                    long stopId = stop.stopId;
+                    String stopId = stop.stopId;
                     String stopName = stop.name;
-                    long stopDeviationsid = resultSet.getLong("stop_deviations_id");
+                    long stopDeviationsId = resultSet.getLong("stop_deviations_id");
                     String existsFromDate = resultSet.getString("SD_VALID_FROM");
                     String existsUpToDate = resultSet.getString("SD_VALID_TO");
                     String description = resultSet.getString("B_DESCRIPTION");
-                    stopCancellations.add(new StopCancellation(stopId, stopGid, stopName, stopDeviationsid, description, existsFromDate, existsUpToDate, timezone));
-                    log.info("Found cancelled stop {} ({}) with cancellation info: {}", stopName, stopId, description);
+                    stopCancellations.add(new StopCancellation(stopId, stopGid, stopName, stopDeviationsId, description, existsFromDate, existsUpToDate, timezone));
+                    log.info("Found cancelled stop {} ({}) with cancellation info: {} - stopDeviationsId: {}", stopName, stopId, description, stopDeviationsId);
                 } else {
                     log.error("Could not find stop info for cancelled stop (gid: {})", stopGid);
                 }

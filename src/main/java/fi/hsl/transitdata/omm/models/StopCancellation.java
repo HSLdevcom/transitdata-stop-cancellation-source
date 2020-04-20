@@ -10,17 +10,17 @@ import java.util.stream.Collectors;
 
 public class StopCancellation {
 
-    public final long stopId;
-    public final long stopGid;
+    public final String stopId;
+    public final String stopGid;
     private final String stopName;
     private final long stopDeviationsId;
     private final String description;
     private final Optional<LocalDateTime> existsFromDate;
     private final Optional<LocalDateTime> existsUpToDate;
     private final String timezone;
-    private final List<Long> affectedJourneyPatternIds;
+    private final List<String> affectedJourneyPatternIds;
 
-    public StopCancellation (long stopId, long stopGid, String stopName, long stopDeviationsId, String description, String existsFromDate, String existsUpToDate, String timezone) {
+    public StopCancellation (String stopId, String stopGid, String stopName, long stopDeviationsId, String description, String existsFromDate, String existsUpToDate, String timezone) {
         this.stopId = stopId;
         this.stopGid = stopGid;
         this.stopName = stopName;
@@ -40,7 +40,7 @@ public class StopCancellation {
         }
     }
 
-    public void addAffectedJourneyPatternId(Long journeyPatternId) {
+    public void addAffectedJourneyPatternId(String journeyPatternId) {
         if (!affectedJourneyPatternIds.contains(journeyPatternId)) {
             affectedJourneyPatternIds.add(journeyPatternId);
         }
@@ -53,11 +53,11 @@ public class StopCancellation {
 
     public InternalMessages.StopCancellations.StopCancellation getAsProtoBuf() {
         InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
-        builder.setStopId(String.valueOf(stopId));
+        builder.setStopId(stopId);
         existsFromDate.ifPresent(localDateTime -> builder.setValidFromUtcMs(toUtcEpochMs(localDateTime)));
         existsUpToDate.ifPresent(localDateTime -> builder.setValidToUtcMs(toUtcEpochMs(localDateTime)));
         if (!affectedJourneyPatternIds.isEmpty()) {
-            builder.addAllAffectedJourneyPatternIds(affectedJourneyPatternIds.stream().map(String::valueOf).collect(Collectors.toList()));
+            builder.addAllAffectedJourneyPatternIds(new ArrayList<>(affectedJourneyPatternIds));
         }
         return builder.build();
     }

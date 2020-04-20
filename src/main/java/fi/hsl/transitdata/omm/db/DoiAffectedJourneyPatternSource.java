@@ -34,11 +34,11 @@ public class DoiAffectedJourneyPatternSource {
         return new DoiAffectedJourneyPatternSource(context, connection);
     }
 
-    public Map<Long, AffectedJourneyPattern> queryAndProcessResults(List<StopCancellation> stopCancellations) throws SQLException {
+    public Map<String, AffectedJourneyPattern> queryAndProcessResults(List<StopCancellation> stopCancellations) throws SQLException {
         log.info("Querying affected journey patterns from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
-        String affectedStops = stopCancellations.stream().map(sc -> String.valueOf(sc.stopGid)).collect(Collectors.joining(","));
+        String affectedStops = stopCancellations.stream().map(sc -> sc.stopGid).collect(Collectors.joining(","));
         String preparedQueryString = queryString
                 .replaceAll("VAR_DATE_NOW", dateNow)
                 .replace("VAR_TO_DATE", dateTo)
@@ -54,17 +54,17 @@ public class DoiAffectedJourneyPatternSource {
         }
     }
 
-    private Map<Long, AffectedJourneyPattern> parseAffectedJourneyPatterns(ResultSet resultSet) throws SQLException {
+    private Map<String, AffectedJourneyPattern> parseAffectedJourneyPatterns(ResultSet resultSet) throws SQLException {
         log.info("Processing affected journey pattern resultset");
-        Map<Long, AffectedJourneyPattern> affectedJourneyPatterns = new HashMap<>();
+        Map<String, AffectedJourneyPattern> affectedJourneyPatterns = new HashMap<>();
         while (resultSet.next()) {
             try {
-                long stopGid = resultSet.getLong("SP_Gid");
-                long stopId = resultSet.getLong("JPP_Number");
+                String stopGid = resultSet.getString("SP_Gid");
+                String stopId = resultSet.getString("JPP_Number");
                 String stopName = resultSet.getString("SP_Name");
                 int stopSequence = resultSet.getInt("PIJP_SequenceNumber");
                 AffectedJourneyPatternStop stop = new AffectedJourneyPatternStop(stopGid, stopId, stopName, stopSequence);
-                long jpId = resultSet.getLong("JP_Id");
+                String jpId = resultSet.getString("JP_Id");
                 if (!affectedJourneyPatterns.containsKey(jpId)) {
                     int jpPointCount = resultSet.getInt("JP_PointCount");
                     affectedJourneyPatterns.put(jpId, new AffectedJourneyPattern(jpId, jpPointCount));

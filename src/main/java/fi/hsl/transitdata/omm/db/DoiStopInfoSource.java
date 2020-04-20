@@ -16,7 +16,7 @@ public class DoiStopInfoSource {
     private final Connection dbConnection;
     private final String queryString;
     private final String timeZone;
-    private final Map<Long, Stop> stopMap;
+    private final Map<String, Stop> stopMap;
 
     private DoiStopInfoSource(PulsarApplicationContext context, Connection connection) throws SQLException {
         this.dbConnection = connection;
@@ -30,11 +30,11 @@ public class DoiStopInfoSource {
         return new DoiStopInfoSource(context, connection);
     }
 
-    public Map<Long, Stop> getStopInfo() {
+    public Map<String, Stop> getStopInfo() {
         return stopMap;
     }
 
-    public Map<Long, Stop> queryAndProcessResults() throws SQLException {
+    public Map<String, Stop> queryAndProcessResults() throws SQLException {
         log.info("Querying stop info from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         try (PreparedStatement statement = dbConnection.prepareStatement(queryString.replaceAll("VAR_DATE_NOW", dateNow))) {
@@ -47,14 +47,14 @@ public class DoiStopInfoSource {
         }
     }
 
-    private Map<Long, Stop> parseStops(ResultSet resultSet) throws SQLException {
+    private Map<String, Stop> parseStops(ResultSet resultSet) throws SQLException {
         log.info("Processing stop info resultset");
-        Map<Long, Stop> map = new HashMap<>();
+        Map<String, Stop> map = new HashMap<>();
         while (resultSet.next()) {
             try {
-                long stopGid = resultSet.getLong("SP_Gid");
+                String stopGid = resultSet.getString("SP_Gid");
                 String name = resultSet.getString("SP_Name");
-                long stopId = resultSet.getLong("JPP_Number");
+                String stopId = resultSet.getString("JPP_Number");
                 if (!map.containsKey(stopGid)) {
                     map.put(stopGid, new Stop(stopGid, stopId, name));
                 }

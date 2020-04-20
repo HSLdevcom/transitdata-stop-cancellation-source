@@ -9,9 +9,9 @@ public class AffectedJourney {
     private final String routeName;
     private final int direction;
     private final String startTime;
-    private final long journeyPatternId;
+    private final String journeyPatternId;
 
-    public AffectedJourney(String tripid, String operatingDay, String routeName, int direction, String startTime, long journeyPatternId) {
+    public AffectedJourney(String tripid, String operatingDay, String routeName, int direction, String startTime, String journeyPatternId) {
         this.tripId = tripid;
         this.operatingDay = operatingDay;
         this.routeName = routeName;

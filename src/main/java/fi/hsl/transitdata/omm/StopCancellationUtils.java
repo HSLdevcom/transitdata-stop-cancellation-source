@@ -10,16 +10,16 @@ import java.util.Map;
 public class StopCancellationUtils {
 
     public static void addAffectedJourneysToJourneyPatterns(
-            Map<Long, AffectedJourneyPattern> affectedJourneyPatternMap,
-            Map<Long, List<AffectedJourney>> affectedJourneysMap) {
-        for (Map.Entry<Long, List<AffectedJourney>> entry : affectedJourneysMap.entrySet()) {
+            Map<String, AffectedJourneyPattern> affectedJourneyPatternMap,
+            Map<String, List<AffectedJourney>> affectedJourneysMap) {
+        for (Map.Entry<String, List<AffectedJourney>> entry : affectedJourneysMap.entrySet()) {
             affectedJourneyPatternMap.get(entry.getKey()).addAffectedJourneys(entry.getValue());
         }
     }
 
     public static void addAffectedJourneyPatternsToStopCancellations(
             List<StopCancellation> stopCancellations,
-            Map<Long, AffectedJourneyPattern> affectedJourneyPatternMap) {
+            Map<String, AffectedJourneyPattern> affectedJourneyPatternMap) {
         for (StopCancellation stopCancellation : stopCancellations) {
             for (AffectedJourneyPattern journeyPattern : affectedJourneyPatternMap.values()) {
                 if (journeyPattern.getStopIds().contains(stopCancellation.stopId)) {

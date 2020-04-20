@@ -31,11 +31,11 @@ public class DoiAffectedJourneySource {
         return new DoiAffectedJourneySource(context, connection);
     }
 
-    public Map<Long, List<AffectedJourney>> queryAndProcessResults(List<Long> affectedJourneyPatterns) throws SQLException {
+    public Map<String, List<AffectedJourney>> queryAndProcessResults(List<String> affectedJourneyPatterns) throws SQLException {
         log.info("Querying affected journeys from database");
         String dateFrom = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
-        String affectedJourneyPatternIds = affectedJourneyPatterns.stream().map(String::valueOf).collect(Collectors.joining(","));
+        String affectedJourneyPatternIds = affectedJourneyPatterns.stream().collect(Collectors.joining(","));
         String preparedString = queryString
                 .replace("VAR_FROM_DATE", dateFrom)
                 .replace("VAR_TO_DATE", dateTo)
@@ -50,9 +50,9 @@ public class DoiAffectedJourneySource {
         }
     }
 
-    private Map<Long, List<AffectedJourney>> parseJourneys(ResultSet resultSet) throws SQLException {
+    private Map<String, List<AffectedJourney>> parseJourneys(ResultSet resultSet) throws SQLException {
         log.info("Processing affected journeys info resultset");
-        Map<Long, List<AffectedJourney>> map = new HashMap<>();
+        Map<String, List<AffectedJourney>> map = new HashMap<>();
         while (resultSet.next()) {
             try {
                 String tripId = resultSet.getString("DVJ_Id");
@@ -60,7 +60,7 @@ public class DoiAffectedJourneySource {
                 String routeName = resultSet.getString("ROUTE_NAME");
                 int direction = resultSet.getInt("DIRECTION");
                 String startTime = resultSet.getString("START_TIME");
-                long journeyPatternId = resultSet.getLong("JP_Id");
+                String journeyPatternId = resultSet.getString("JP_Id");
                 AffectedJourney affectedJourney = new AffectedJourney(tripId, operatingDay, routeName, direction, startTime, journeyPatternId);
                 if (!map.containsKey(journeyPatternId)) {
                     map.put(journeyPatternId, new LinkedList<>());
@@ -71,7 +71,7 @@ public class DoiAffectedJourneySource {
             }
         }
         log.info("Found affected journeys for {} journey patterns", map.size());
-        for (Long journeyPatternId : map.keySet()) {
+        for (String journeyPatternId : map.keySet()) {
             log.info("Found {} journeys for affected journey pattern id {}", map.get(journeyPatternId).size(), journeyPatternId);
         }
         return map;
