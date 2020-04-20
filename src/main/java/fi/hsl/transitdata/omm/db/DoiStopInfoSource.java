@@ -35,11 +35,9 @@ public class DoiStopInfoSource {
     }
 
     public Map<Long, Stop> queryAndProcessResults() throws SQLException {
-        String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         log.info("Querying stop info from database");
-        try (PreparedStatement statement = dbConnection.prepareStatement(queryString)) {
-            statement.setString(1, dateNow);
-            statement.setString(2, dateNow);
+        String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
+        try (PreparedStatement statement = dbConnection.prepareStatement(queryString.replaceAll("VAR_DATE_NOW", dateNow))) {
             ResultSet resultSet = statement.executeQuery();
             return parseStops(resultSet);
         }
@@ -50,8 +48,8 @@ public class DoiStopInfoSource {
     }
 
     private Map<Long, Stop> parseStops(ResultSet resultSet) throws SQLException {
-        Map<Long, Stop> map = new HashMap<>();
         log.info("Processing stop info resultset");
+        Map<Long, Stop> map = new HashMap<>();
         while (resultSet.next()) {
             try {
                 long stopGid = resultSet.getLong("SP_Gid");

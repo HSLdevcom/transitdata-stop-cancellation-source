@@ -51,8 +51,8 @@ public class DoiAffectedJourneySource {
     }
 
     private Map<Long, List<AffectedJourney>> parseJourneys(ResultSet resultSet) throws SQLException {
-        Map<Long, List<AffectedJourney>> map = new HashMap<>();
         log.info("Processing affected journeys info resultset");
+        Map<Long, List<AffectedJourney>> map = new HashMap<>();
         while (resultSet.next()) {
             try {
                 String tripId = resultSet.getString("DVJ_Id");

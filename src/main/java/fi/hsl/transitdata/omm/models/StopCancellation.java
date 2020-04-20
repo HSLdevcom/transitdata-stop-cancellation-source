@@ -9,15 +9,15 @@ import java.util.Optional;
 
 public class StopCancellation {
 
-    public long stopId;
-    public long stopGid;
-    public String stopName;
-    public long stopDeviationsId;
-    public String description;
-    public Optional<LocalDateTime> existsFromDate;
-    public Optional<LocalDateTime> existsUpToDate;
-    private String timezone;
-    private List<Long> affectedJourneyPatternIds;
+    public final long stopId;
+    public final long stopGid;
+    private final String stopName;
+    private final long stopDeviationsId;
+    private final String description;
+    private final Optional<LocalDateTime> existsFromDate;
+    private final Optional<LocalDateTime> existsUpToDate;
+    private final String timezone;
+    private final List<Long> affectedJourneyPatternIds;
 
     public StopCancellation (long stopId, long stopGid, String stopName, long stopDeviationsId, String description, String existsFromDate, String existsUpToDate, String timezone) {
         this.stopId = stopId;
@@ -36,6 +36,12 @@ public class StopCancellation {
             return Optional.of(LocalDateTime.parse(dateStr.replace(" ", "T")));
         } catch (Exception e) {
             return Optional.empty();
+        }
+    }
+
+    public void addAffectedJourneyPatternId(Long journeyPatternId) {
+        if (!affectedJourneyPatternIds.contains(journeyPatternId)) {
+            affectedJourneyPatternIds.add(journeyPatternId);
         }
     }
 

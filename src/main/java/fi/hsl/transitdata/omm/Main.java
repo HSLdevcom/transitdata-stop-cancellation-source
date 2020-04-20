@@ -50,8 +50,11 @@ public class Main {
             scheduler.scheduleAtFixedRate(() -> {
                 try {
                     List<StopCancellation> stopCancellations = omm.queryAndProcessResults(doiStops.getStopInfo());
-                    Map<Long, AffectedJourneyPattern> affectedJourneyPatterns = doiJourneyPatterns.queryAndProcessResults(stopCancellations);
-                    Map<Long, List<AffectedJourney>> affectedJourneys = doiAffectedJourneys.queryAndProcessResults(new ArrayList<>(affectedJourneyPatterns.keySet()));
+                    Map<Long, AffectedJourneyPattern> affectedJourneyPatternMap = doiJourneyPatterns.queryAndProcessResults(stopCancellations);
+                    // query affected journeys and organize them by journeyPatternIds
+                    Map<Long, List<AffectedJourney>> affectedJourneyMap = doiAffectedJourneys.queryAndProcessResults(new ArrayList<>(affectedJourneyPatternMap.keySet()));
+                    StopCancellationUtils.addAffectedJourneysToJourneyPatterns(affectedJourneyPatternMap, affectedJourneyMap);
+                    StopCancellationUtils.addAffectedJourneyPatternsToStopCancellations(stopCancellations, affectedJourneyPatternMap);
                     publisher.sendStopCancellations(stopCancellations);
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);

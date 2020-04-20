@@ -55,8 +55,8 @@ public class DoiAffectedJourneyPatternSource {
     }
 
     private Map<Long, AffectedJourneyPattern> parseAffectedJourneyPatterns(ResultSet resultSet) throws SQLException {
-        Map<Long, AffectedJourneyPattern> affectedJourneyPatterns = new HashMap<>();
         log.info("Processing affected journey pattern resultset");
+        Map<Long, AffectedJourneyPattern> affectedJourneyPatterns = new HashMap<>();
         while (resultSet.next()) {
             try {
                 long stopGid = resultSet.getLong("SP_Gid");

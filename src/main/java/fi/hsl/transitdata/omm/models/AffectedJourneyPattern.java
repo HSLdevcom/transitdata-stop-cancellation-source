@@ -7,27 +7,29 @@ import java.util.Map;
 
 public class AffectedJourneyPattern {
 
-    public long id;
-    public int stopCount;
-    public Map<Integer, AffectedJourneyPatternStop> stops;
-    public List<Long> affectedDvjs;
+    public final long id;
+    private final int stopCount;
+    private final Map<Long, AffectedJourneyPatternStop> stops;
+    private final List<AffectedJourney> affectedJourneys;
 
     public AffectedJourneyPattern(long id, int stopCount) {
         this.id = id;
         this.stopCount = stopCount;
         this.stops = new HashMap<>();
-        this.affectedDvjs = new ArrayList<>();
+        this.affectedJourneys = new ArrayList<>();
+    }
+
+    public List<Long> getStopIds(){
+        return new ArrayList<>(stops.keySet());
     }
 
     public void addStop(AffectedJourneyPatternStop stop) {
-        if (!stops.containsKey(stop.sequence)) {
-            stops.put(stop.sequence, stop);
+        if (!stops.containsKey(stop.stopId)) {
+            stops.put(stop.stopId, stop);
         }
     }
 
-    public void addAffectedDvj(long dvj) {
-        if (!affectedDvjs.contains(dvj)) {
-            affectedDvjs.add(dvj);
-        }
+    public void addAffectedJourneys(List<AffectedJourney> affectedJourneys) {
+        this.affectedJourneys.addAll(affectedJourneys);
     }
 }

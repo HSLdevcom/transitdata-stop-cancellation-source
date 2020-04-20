@@ -59,7 +59,7 @@ public class OmmStopCancellationSource {
                     String existsUpToDate = resultSet.getString("SD_VALID_TO");
                     String description = resultSet.getString("B_DESCRIPTION");
                     stopCancellations.add(new StopCancellation(stopId, stopGid, stopName, stopDeviationsid, description, existsFromDate, existsUpToDate, timezone));
-                    log.info("Reading cancelled stop {} ({}) with cancellation info: {}", stopName, stopId, description);
+                    log.info("Found cancelled stop {} ({}) with cancellation info: {}", stopName, stopId, description);
                 } else {
                     log.error("Could not find stop info for cancelled stop (gid: {})", stopGid);
                 }
