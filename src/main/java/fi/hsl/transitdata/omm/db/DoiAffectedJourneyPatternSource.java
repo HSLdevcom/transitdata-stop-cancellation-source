@@ -20,11 +20,13 @@ public class DoiAffectedJourneyPatternSource {
     private final Connection dbConnection;
     private final String queryString;
     private final String timeZone;
+    private final int queryFutureInDays;
 
     private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection) {
         dbConnection = connection;
         queryString = QueryUtils.createQuery(getClass(), "/affected_journey_patterns.sql");
         timeZone = context.getConfig().getString("omm.timezone");
+        queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
     }
 
     public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
@@ -35,9 +37,11 @@ public class DoiAffectedJourneyPatternSource {
     public Map<Long, AffectedJourneyPattern> queryAndProcessResults(List<StopCancellation> stopCancellations) throws SQLException {
         log.info("Querying affected journey patterns from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
+        String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
         String affectedStops = stopCancellations.stream().map(sc -> String.valueOf(sc.stopGid)).collect(Collectors.joining(","));
         String preparedQueryString = queryString
-                .replaceAll("VAR_DATE_NOW", "'"+dateNow+"'")
+                .replaceAll("VAR_DATE_NOW", dateNow)
+                .replace("VAR_TO_DATE", dateTo)
                 .replace("VAR_AFFECTED_STOP_GIDS", affectedStops);
 
         try (PreparedStatement statement = dbConnection.prepareStatement(preparedQueryString)) {

@@ -19,6 +19,6 @@ SELECT DISTINCT CONVERT(CHAR(16), DVJ.Id) AS DVJ_Id,
     AND OT.Name = 'VehicleJourney'
     AND VJT.IsWorkedOnDirectionOfLineGid IS NOT NULL
     AND DVJ.OperatingDayDate >= 'VAR_FROM_DATE'
-    AND DVJ.OperatingDayDate < 'VAR_TO_DATE'
+    AND DVJ.OperatingDayDate <= 'VAR_TO_DATE'
     AND DVJ.IsReplacedById IS NULL
     AND JP.Id IN (VAR_AFFECTED_JP_IDS);

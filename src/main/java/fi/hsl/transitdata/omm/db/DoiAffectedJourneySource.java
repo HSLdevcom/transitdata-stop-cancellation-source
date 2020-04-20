@@ -32,14 +32,14 @@ public class DoiAffectedJourneySource {
     }
 
     public Map<Long, List<AffectedJourney>> queryAndProcessResults(List<Long> affectedJourneyPatterns) throws SQLException {
-        String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
-        String dateThen = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
+        log.info("Querying affected journeys from database");
+        String dateFrom = QueryUtils.localDateAsString(Instant.now(), timeZone);
+        String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
         String affectedJourneyPatternIds = affectedJourneyPatterns.stream().map(String::valueOf).collect(Collectors.joining(","));
         String preparedString = queryString
-                .replace("VAR_FROM_DATE", dateNow)
-                .replace("VAR_TO_DATE", dateThen)
+                .replace("VAR_FROM_DATE", dateFrom)
+                .replace("VAR_TO_DATE", dateTo)
                 .replace("VAR_AFFECTED_JP_IDS", affectedJourneyPatternIds);
-        log.info("Querying affected journeys from database");
         try (PreparedStatement statement = dbConnection.prepareStatement(preparedString)) {
             ResultSet resultSet = statement.executeQuery();
             return parseJourneys(resultSet);
@@ -70,6 +70,7 @@ public class DoiAffectedJourneySource {
                 log.error("Error while parsing affected journeys resultset", iae);
             }
         }
+        log.info("Found affected journeys for {} journey patterns", map.size());
         for (Long journeyPatternId : map.keySet()) {
             log.info("Found {} journeys for affected journey pattern id {}", map.get(journeyPatternId).size(), journeyPatternId);
         }
