@@ -2,10 +2,7 @@ package fi.hsl.transitdata.omm;
 
 import java.io.File;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +12,7 @@ import fi.hsl.common.config.ConfigParser;
 import fi.hsl.common.config.ConfigUtils;
 import fi.hsl.common.pulsar.PulsarApplication;
 import fi.hsl.common.pulsar.PulsarApplicationContext;
+import fi.hsl.common.transitdata.proto.InternalMessages;
 import fi.hsl.transitdata.omm.db.DoiAffectedJourneyPatternSource;
 import fi.hsl.transitdata.omm.db.DoiAffectedJourneySource;
 import fi.hsl.transitdata.omm.db.DoiStopInfoSource;
@@ -55,7 +53,10 @@ public class Main {
                     Map<String, List<AffectedJourney>> affectedJourneyMap = doiAffectedJourneys.queryAndProcessResults(new ArrayList<>(affectedJourneyPatternMap.keySet()));
                     StopCancellationUtils.addAffectedJourneysToJourneyPatterns(affectedJourneyPatternMap, affectedJourneyMap);
                     StopCancellationUtils.addAffectedJourneyPatternsToStopCancellations(stopCancellations, affectedJourneyPatternMap);
-                    publisher.sendStopCancellations(stopCancellations, new ArrayList<>(affectedJourneyPatternMap.values()));
+                    Optional<InternalMessages.StopCancellations> message = StopCancellationUtils.createStopCancellationsMessage(stopCancellations, new ArrayList<>(affectedJourneyPatternMap.values()));
+                    if (message.isPresent()) {
+                        publisher.sendStopCancellations(message.get());
+                    }
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);
                     closeApplication(app, scheduler);

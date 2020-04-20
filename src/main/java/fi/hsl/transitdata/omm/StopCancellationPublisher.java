@@ -3,8 +3,6 @@ package fi.hsl.transitdata.omm;
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.common.transitdata.TransitdataProperties;
 import fi.hsl.common.transitdata.proto.InternalMessages;
-import fi.hsl.transitdata.omm.models.AffectedJourneyPattern;
-import fi.hsl.transitdata.omm.models.StopCancellation;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
@@ -12,8 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class StopCancellationPublisher {
 
@@ -26,14 +22,9 @@ public class StopCancellationPublisher {
         timeZone = context.getConfig().getString("omm.timezone");
     }
 
-    public void sendStopCancellations(List<StopCancellation> stopCancellations, List<AffectedJourneyPattern> journeyPatterns) throws PulsarClientException {
-        if (!stopCancellations.isEmpty()) {
-            InternalMessages.StopCancellations.Builder builder = InternalMessages.StopCancellations.newBuilder();
-            builder.addAllStopCancellations(stopCancellations.stream().map(sc -> sc.getAsProtoBuf()).collect(Collectors.toList()));
-            builder.addAllAffectedJourneyPatterns(journeyPatterns.stream().map(jp -> jp.getAsProtoBuf()).collect(Collectors.toList()));
-            final long currentTimestampUtcMs = ZonedDateTime.now(ZoneId.of(timeZone)).toInstant().toEpochMilli();
-            sendStopCancellations(builder.build(), currentTimestampUtcMs);
-        }
+    public void sendStopCancellations(InternalMessages.StopCancellations message) throws PulsarClientException {
+        final long currentTimestampUtcMs = ZonedDateTime.now(ZoneId.of(timeZone)).toInstant().toEpochMilli();
+        sendStopCancellations(message, currentTimestampUtcMs);
     }
 
     private void sendStopCancellations(InternalMessages.StopCancellations message, long timestamp) throws PulsarClientException {
