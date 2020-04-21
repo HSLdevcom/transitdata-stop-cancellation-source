@@ -1,12 +1,5 @@
 package fi.hsl.transitdata.omm;
 
-import java.io.File;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import com.typesafe.config.Config;
 import fi.hsl.common.config.ConfigParser;
 import fi.hsl.common.config.ConfigUtils;
@@ -24,6 +17,13 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class Main {
 
     private static final Logger log = LoggerFactory.getLogger(Main.class);
@@ -33,8 +33,8 @@ public class Main {
 
         try {
             final Config config = ConfigParser.createConfig();
-            final String ommConnString = readConnString("OMM_CONNECTION_STRING", "omm_conn_string");
-            final String doiConnString = readConnString("DOI_CONNECTION_STRING", "doi_conn_string");
+            final String doiConnString = readConnString("FILEPATH_CONNECTION_STRING", "TRANSITDATA_PUBTRANS_CONN_STRING");
+            final String ommConnString = readConnString("FILEPATH_CONNECTION_STRING_TEST", "TRANSITDATA_PUBTRANS_TEST_CONN_STRING");
             final int pollIntervalInSeconds = config.getInt("omm.interval");
             final PulsarApplication app = PulsarApplication.newInstance(config);
             final PulsarApplicationContext context = app.getContext();
