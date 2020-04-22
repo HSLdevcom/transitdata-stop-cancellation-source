@@ -46,16 +46,17 @@ public class StopCancellation {
         }
     }
 
-    private Long toUtcEpochMs(LocalDateTime dt) {
+    private Long toUtcEpochSeconds(LocalDateTime dt) {
+        // convert dt to Unix time (i.e. Epoch time in seconds)
         ZoneId zone = ZoneId.of(timezone);
-        return dt.atZone(zone).toInstant().toEpochMilli();
+        return dt.atZone(zone).toEpochSecond();
     }
 
     public InternalMessages.StopCancellations.StopCancellation getAsProtoBuf() {
         InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
         builder.setStopId(stopId);
-        existsFromDate.ifPresent(localDateTime -> builder.setValidFromUtcMs(toUtcEpochMs(localDateTime)));
-        existsUpToDate.ifPresent(localDateTime -> builder.setValidToUtcMs(toUtcEpochMs(localDateTime)));
+        existsFromDate.ifPresent(localDateTime -> builder.setValidFromUnixS(toUtcEpochSeconds(localDateTime)));
+        existsUpToDate.ifPresent(localDateTime -> builder.setValidToUnixS(toUtcEpochSeconds(localDateTime)));
         if (!affectedJourneyPatternIds.isEmpty()) {
             builder.addAllAffectedJourneyPatternIds(new ArrayList<>(affectedJourneyPatternIds));
         }
