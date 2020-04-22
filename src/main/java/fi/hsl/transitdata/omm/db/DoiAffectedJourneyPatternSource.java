@@ -63,13 +63,16 @@ public class DoiAffectedJourneyPatternSource {
                 String stopId = resultSet.getString("JPP_Number");
                 String stopName = resultSet.getString("SP_Name");
                 int stopSequence = resultSet.getInt("PIJP_SequenceNumber");
-                AffectedJourneyPatternStop stop = new AffectedJourneyPatternStop(stopGid, stopId, stopName, stopSequence);
                 String jpId = resultSet.getString("JP_Id");
-                if (!affectedJourneyPatterns.containsKey(jpId)) {
-                    int jpPointCount = resultSet.getInt("JP_PointCount");
-                    affectedJourneyPatterns.put(jpId, new AffectedJourneyPattern(jpId, jpPointCount));
+                if (stopId != null) {
+                    if (!affectedJourneyPatterns.containsKey(jpId)) {
+                        int jpPointCount = resultSet.getInt("JP_PointCount");
+                        affectedJourneyPatterns.put(jpId, new AffectedJourneyPattern(jpId, jpPointCount));
+                    }
+                    affectedJourneyPatterns.get(jpId).addStop(new AffectedJourneyPatternStop(stopGid, stopId, stopName, stopSequence));
+                } else {
+                    log.warn("found null stopId with sequence {} for jpId {}", stopSequence, jpId);
                 }
-                affectedJourneyPatterns.get(jpId).addStop(stop);
             } catch (IllegalArgumentException iae) {
                 log.error("Error while parsing the affected journey patterns resultset", iae);
             }

@@ -72,7 +72,7 @@ public class DoiAffectedJourneySource {
         }
         log.info("Found affected journeys for {} journey patterns", map.size());
         for (String journeyPatternId : map.keySet()) {
-            log.info("Found {} journeys for affected journey pattern id {}", map.get(journeyPatternId).size(), journeyPatternId);
+            log.info("Found {} affected journeys for affected journey pattern id {}", map.get(journeyPatternId).size(), journeyPatternId);
         }
         return map;
     }
