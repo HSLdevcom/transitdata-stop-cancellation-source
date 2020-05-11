@@ -3,7 +3,7 @@ package fi.hsl.transitdata.omm.db;
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.omm.models.AffectedJourneyPattern;
 import fi.hsl.transitdata.omm.models.AffectedJourneyPatternStop;
-import fi.hsl.transitdata.omm.models.StopCancellation;
+import fi.hsl.transitdata.omm.models.ClosedStop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,11 +34,11 @@ public class DoiAffectedJourneyPatternSource {
         return new DoiAffectedJourneyPatternSource(context, connection);
     }
 
-    public Map<String, AffectedJourneyPattern> queryAndProcessResults(List<StopCancellation> stopCancellations) throws SQLException {
+    public Map<String, AffectedJourneyPattern> queryAndProcessResults(List<ClosedStop> closedStops) throws SQLException {
         log.info("Querying affected journey patterns from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
-        String affectedStops = stopCancellations.stream().map(sc -> sc.stopGid).collect(Collectors.joining(","));
+        String affectedStops = closedStops.stream().map(sc -> sc.stopGid).collect(Collectors.joining(","));
         String preparedQueryString = queryString
                 .replaceAll("VAR_DATE_NOW", dateNow)
                 .replace("VAR_TO_DATE", dateTo)

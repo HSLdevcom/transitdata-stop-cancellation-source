@@ -4,7 +4,7 @@ import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.omm.models.Stop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import fi.hsl.transitdata.omm.models.StopCancellation;
+import fi.hsl.transitdata.omm.models.ClosedStop;
 
 import java.sql.*;
 import java.time.Instant;
@@ -12,31 +12,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OmmStopCancellationSource {
+public class OmmClosedStopSource {
 
-    private static final Logger log = LoggerFactory.getLogger(OmmStopCancellationSource.class);
+    private static final Logger log = LoggerFactory.getLogger(OmmClosedStopSource.class);
     private final Connection dbConnection;
     private final String queryString;
     private final String timezone;
 
-    private OmmStopCancellationSource(PulsarApplicationContext context, Connection connection) {
+    private OmmClosedStopSource(PulsarApplicationContext context, Connection connection) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass() ,"/stop_cancellations.sql");
+        queryString = QueryUtils.createQuery(getClass() ,"/closed_stops.sql");
         timezone = context.getConfig().getString("omm.timezone");
     }
 
-    public static OmmStopCancellationSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
+    public static OmmClosedStopSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
-        return new OmmStopCancellationSource(context, connection);
+        return new OmmClosedStopSource(context, connection);
     }
 
-    public List<StopCancellation> queryAndProcessResults(Map<String, Stop> stopInfo) throws SQLException {
+    public List<ClosedStop> queryAndProcessResults(Map<String, Stop> stopInfo) throws SQLException {
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timezone);
-        log.info("Querying stopCancellations from database");
+        log.info("Querying closed stops from database");
         try (PreparedStatement statement = dbConnection.prepareStatement(queryString)) {
             statement.setString(1, dateNow);
             ResultSet resultSet = statement.executeQuery();
-            return parseStopCancellations(resultSet, stopInfo);
+            return parseClosedStops(resultSet, stopInfo);
         }
         catch (Exception e) {
             log.error("Error while  querying and processing messages", e);
@@ -44,9 +44,9 @@ public class OmmStopCancellationSource {
         }
     }
 
-    private List<StopCancellation> parseStopCancellations(ResultSet resultSet, Map<String, Stop> stopInfo) throws SQLException {
-        List<StopCancellation> stopCancellations = new ArrayList<>();
-        log.info("Processing stopCancellations resultset");
+    private List<ClosedStop> parseClosedStops(ResultSet resultSet, Map<String, Stop> stopInfo) throws SQLException {
+        List<ClosedStop> closedStops = new ArrayList<>();
+        log.info("Processing closed stops resultset");
         while (resultSet.next()) {
             try {
                 String stopGid = resultSet.getString("SC_STOP_ID");
@@ -58,16 +58,16 @@ public class OmmStopCancellationSource {
                     String existsFromDate = resultSet.getString("SD_VALID_FROM");
                     String existsUpToDate = resultSet.getString("SD_VALID_TO");
                     String description = resultSet.getString("B_DESCRIPTION");
-                    stopCancellations.add(new StopCancellation(stopId, stopGid, stopName, stopDeviationsId, description, existsFromDate, existsUpToDate, timezone));
-                    log.info("Found cancelled stop {} ({}) with cancellation info: {} - stopDeviationsId: {}", stopName, stopId, description, stopDeviationsId);
+                    closedStops.add(new ClosedStop(stopId, stopGid, stopName, stopDeviationsId, description, existsFromDate, existsUpToDate, timezone));
+                    log.info("Found closed stop {} ({}) with info: {} - stopDeviationsId: {}", stopName, stopId, description, stopDeviationsId);
                 } else {
-                    log.error("Could not find stop info for cancelled stop (gid: {})", stopGid);
+                    log.error("Could not find stop info for closed stop (gid: {})", stopGid);
                 }
             } catch (IllegalArgumentException iae) {
-                log.error("Error while parsing the stopCancellation resultset", iae);
+                log.error("Error while parsing the closed stop resultset", iae);
             }
         }
-        log.info("Found {} stop cancellations", stopCancellations.size());
-        return stopCancellations;
+        log.info("Found {} closed stops", closedStops.size());
+        return closedStops;
     }
 }

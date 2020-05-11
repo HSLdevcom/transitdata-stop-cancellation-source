@@ -9,10 +9,10 @@ import fi.hsl.common.transitdata.proto.InternalMessages;
 import fi.hsl.transitdata.omm.db.DoiAffectedJourneyPatternSource;
 import fi.hsl.transitdata.omm.db.DoiAffectedJourneySource;
 import fi.hsl.transitdata.omm.db.DoiStopInfoSource;
-import fi.hsl.transitdata.omm.db.OmmStopCancellationSource;
+import fi.hsl.transitdata.omm.db.OmmClosedStopSource;
 import fi.hsl.transitdata.omm.models.AffectedJourney;
 import fi.hsl.transitdata.omm.models.AffectedJourneyPattern;
-import fi.hsl.transitdata.omm.models.StopCancellation;
+import fi.hsl.transitdata.omm.models.ClosedStop;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,20 +40,20 @@ public class Main {
             final PulsarApplicationContext context = app.getContext();
 
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, doiConnString);
-            final OmmStopCancellationSource omm = OmmStopCancellationSource.newInstance(context, ommConnString);
+            final OmmClosedStopSource omm = OmmClosedStopSource.newInstance(context, ommConnString);
             final DoiAffectedJourneyPatternSource doiJourneyPatterns = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
             final DoiAffectedJourneySource doiAffectedJourneys = DoiAffectedJourneySource.newInstance(context, doiConnString);
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
             scheduler.scheduleAtFixedRate(() -> {
                 try {
-                    List<StopCancellation> stopCancellations = omm.queryAndProcessResults(doiStops.getStopInfo());
-                    Map<String, AffectedJourneyPattern> affectedJourneyPatternMap = doiJourneyPatterns.queryAndProcessResults(stopCancellations);
+                    List<ClosedStop> closedStops = omm.queryAndProcessResults(doiStops.getStopInfo());
+                    Map<String, AffectedJourneyPattern> affectedJourneyPatternById = doiJourneyPatterns.queryAndProcessResults(closedStops);
                     // query affected journeys and organize them by journeyPatternIds
-                    Map<String, List<AffectedJourney>> affectedJourneyMap = doiAffectedJourneys.queryAndProcessResults(new ArrayList<>(affectedJourneyPatternMap.keySet()));
-                    StopCancellationUtils.addAffectedJourneysToJourneyPatterns(affectedJourneyPatternMap, affectedJourneyMap);
-                    StopCancellationUtils.addAffectedJourneyPatternsToStopCancellations(stopCancellations, affectedJourneyPatternMap);
-                    Optional<InternalMessages.StopCancellations> message = StopCancellationUtils.createStopCancellationsMessage(stopCancellations, new ArrayList<>(affectedJourneyPatternMap.values()));
+                    Map<String, List<AffectedJourney>> affectedJourneysByJourneyPatternId = doiAffectedJourneys.queryAndProcessResults(new ArrayList<>(affectedJourneyPatternById.keySet()));
+                    StopCancellationUtils.addAffectedJourneysToJourneyPatterns(affectedJourneyPatternById, affectedJourneysByJourneyPatternId);
+                    StopCancellationUtils.addAffectedJourneyPatternsToStopCancellations(closedStops, affectedJourneyPatternById);
+                    Optional<InternalMessages.StopCancellations> message = StopCancellationUtils.createStopCancellationsMessage(closedStops, new ArrayList<>(affectedJourneyPatternById.values()));
                     if (message.isPresent()) {
                         publisher.sendStopCancellations(message.get());
                     }
