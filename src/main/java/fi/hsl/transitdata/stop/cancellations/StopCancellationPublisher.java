@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm;
+package fi.hsl.transitdata.stop.cancellations;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.common.transitdata.TransitdataProperties;

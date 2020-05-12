@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm;
+package fi.hsl.transitdata.stop.cancellations;
 
 import com.typesafe.config.Config;
 import fi.hsl.common.config.ConfigParser;
@@ -6,11 +6,10 @@ import fi.hsl.common.config.ConfigUtils;
 import fi.hsl.common.pulsar.PulsarApplication;
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.common.transitdata.proto.InternalMessages;
-import fi.hsl.transitdata.omm.db.*;
-import fi.hsl.transitdata.omm.models.AffectedJourney;
-import fi.hsl.transitdata.omm.models.AffectedJourneyPattern;
-import fi.hsl.transitdata.omm.models.ClosedStop;
-import fi.hsl.transitdata.omm.models.DisruptionRoute;
+import fi.hsl.transitdata.stop.cancellations.closed.stop.source.ClosedStopHandler;
+import fi.hsl.transitdata.stop.cancellations.disruption.route.source.DisruptionRouteHandler;
+import fi.hsl.transitdata.stop.cancellations.disruption.route.source.models.DisruptionRoute;
+import fi.hsl.transitdata.stop.cancellations.db.DoiStopInfoSource;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,24 +37,18 @@ public class Main {
             final PulsarApplicationContext context = app.getContext();
 
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, doiConnString);
-            final OmmClosedStopSource ommClosedStopSource = OmmClosedStopSource.newInstance(context, ommConnString);
-            final OmmDisruptionRouteSource ommDisruptionRouteSource = OmmDisruptionRouteSource.newInstance(ommConnString);
-            final DoiAffectedJourneyPatternSource doiJourneyPatterns = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
-            final DoiAffectedJourneySource doiAffectedJourneys = DoiAffectedJourneySource.newInstance(context, doiConnString);
+            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(ommConnString);
+            final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, ommConnString, doiConnString);
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
             scheduler.scheduleAtFixedRate(() -> {
                 try {
-                    // Query closed stops, affected journey patterns and affected journeys
-                    List<ClosedStop> closedStops = ommClosedStopSource.queryAndProcessResults(doiStops.getStopInfo());
-                    Map<String, AffectedJourneyPattern> affectedJourneyPatternById = doiJourneyPatterns.queryAndProcessResults(closedStops);
-                    Map<String, List<AffectedJourney>> affectedJourneysByJourneyPatternId = doiAffectedJourneys.queryAndProcessResults(new ArrayList<>(affectedJourneyPatternById.keySet()));
-                    StopCancellationUtils.addAffectedJourneysToJourneyPatterns(affectedJourneyPatternById, affectedJourneysByJourneyPatternId);
-                    StopCancellationUtils.addAffectedJourneyPatternsToStopCancellations(closedStops, affectedJourneyPatternById);
                     // Query disruption routes and affected journeys
-                    List<DisruptionRoute> disruptionRoutes = ommDisruptionRouteSource.queryAndProcessResults();
+                    List<DisruptionRoute> disruptionRoutes = disruptionRouteHandler.queryAndProcessResults();
 
-                    Optional<InternalMessages.StopCancellations> message = StopCancellationUtils.createStopCancellationsMessage(closedStops, new ArrayList<>(affectedJourneyPatternById.values()));
+                    // Query closed stops, affected journey patterns and affected journeys
+                    Optional<InternalMessages.StopCancellations> message = closedStopHandler.queryAndProcessResults(doiStops);
+
                     if (message.isPresent()) {
                         publisher.sendStopCancellations(message.get());
                     }

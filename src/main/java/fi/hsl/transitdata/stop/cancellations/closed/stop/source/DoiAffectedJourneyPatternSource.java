@@ -1,9 +1,10 @@
-package fi.hsl.transitdata.omm.db;
+package fi.hsl.transitdata.stop.cancellations.closed.stop.source;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
-import fi.hsl.transitdata.omm.models.AffectedJourneyPattern;
-import fi.hsl.transitdata.omm.models.AffectedJourneyPatternStop;
-import fi.hsl.transitdata.omm.models.ClosedStop;
+import fi.hsl.transitdata.stop.cancellations.db.QueryUtils;
+import fi.hsl.transitdata.stop.cancellations.models.JourneyPattern;
+import fi.hsl.transitdata.stop.cancellations.models.JourneyPatternStop;
+import fi.hsl.transitdata.stop.cancellations.closed.stop.source.models.ClosedStop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,7 @@ public class DoiAffectedJourneyPatternSource {
         return new DoiAffectedJourneyPatternSource(context, connection);
     }
 
-    public Map<String, AffectedJourneyPattern> queryAndProcessResults(List<ClosedStop> closedStops) throws SQLException {
+    public Map<String, JourneyPattern> queryByClosedStops(List<ClosedStop> closedStops) throws SQLException {
         log.info("Querying affected journey patterns from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
@@ -54,9 +55,9 @@ public class DoiAffectedJourneyPatternSource {
         }
     }
 
-    private Map<String, AffectedJourneyPattern> parseAffectedJourneyPatterns(ResultSet resultSet) throws SQLException {
+    private Map<String, JourneyPattern> parseAffectedJourneyPatterns(ResultSet resultSet) throws SQLException {
         log.info("Processing affected journey pattern resultset");
-        Map<String, AffectedJourneyPattern> affectedJourneyPatterns = new HashMap<>();
+        Map<String, JourneyPattern> affectedJourneyPatterns = new HashMap<>();
         while (resultSet.next()) {
             try {
                 String stopGid = resultSet.getString("SP_Gid");
@@ -67,9 +68,9 @@ public class DoiAffectedJourneyPatternSource {
                 if (stopId != null) {
                     if (!affectedJourneyPatterns.containsKey(jpId)) {
                         int jpPointCount = resultSet.getInt("JP_PointCount");
-                        affectedJourneyPatterns.put(jpId, new AffectedJourneyPattern(jpId, jpPointCount));
+                        affectedJourneyPatterns.put(jpId, new JourneyPattern(jpId, jpPointCount));
                     }
-                    affectedJourneyPatterns.get(jpId).addStop(new AffectedJourneyPatternStop(stopGid, stopId, stopName, stopSequence));
+                    affectedJourneyPatterns.get(jpId).addStop(new JourneyPatternStop(stopGid, stopId, stopName, stopSequence));
                 } else {
                     log.warn("found null stopId with sequence {} for jpId {}", stopSequence, jpId);
                 }

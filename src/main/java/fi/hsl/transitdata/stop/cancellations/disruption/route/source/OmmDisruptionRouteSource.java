@@ -1,6 +1,7 @@
-package fi.hsl.transitdata.omm.db;
+package fi.hsl.transitdata.stop.cancellations.disruption.route.source;
 
-import fi.hsl.transitdata.omm.models.DisruptionRoute;
+import fi.hsl.transitdata.stop.cancellations.db.QueryUtils;
+import fi.hsl.transitdata.stop.cancellations.disruption.route.source.models.DisruptionRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

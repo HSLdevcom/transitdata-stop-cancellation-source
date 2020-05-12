@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm.models;
+package fi.hsl.transitdata.stop.cancellations.disruption.route.source.models;
 
 import java.time.LocalDateTime;
 import java.util.Optional;

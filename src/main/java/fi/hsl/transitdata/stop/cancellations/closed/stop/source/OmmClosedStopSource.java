@@ -1,10 +1,11 @@
-package fi.hsl.transitdata.omm.db;
+package fi.hsl.transitdata.stop.cancellations.closed.stop.source;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
-import fi.hsl.transitdata.omm.models.Stop;
+import fi.hsl.transitdata.stop.cancellations.db.QueryUtils;
+import fi.hsl.transitdata.stop.cancellations.models.Stop;
+import fi.hsl.transitdata.stop.cancellations.closed.stop.source.models.ClosedStop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import fi.hsl.transitdata.omm.models.ClosedStop;
 
 import java.sql.*;
 import java.time.Instant;

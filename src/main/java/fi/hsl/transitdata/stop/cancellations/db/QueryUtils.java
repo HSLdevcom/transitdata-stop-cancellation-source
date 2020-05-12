@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm.db;
+package fi.hsl.transitdata.stop.cancellations.db;
 
 import fi.hsl.common.files.FileUtils;
 import org.slf4j.Logger;

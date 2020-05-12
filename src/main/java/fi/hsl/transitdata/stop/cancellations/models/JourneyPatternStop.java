@@ -1,15 +1,15 @@
-package fi.hsl.transitdata.omm.models;
+package fi.hsl.transitdata.stop.cancellations.models;
 
 import fi.hsl.common.transitdata.proto.InternalMessages;
 
-public class AffectedJourneyPatternStop {
+public class JourneyPatternStop {
 
     private final String stopGid;
     public final String stopId;
     private final int sequence;
     private final String name;
 
-    public AffectedJourneyPatternStop(String stopGid, String stopId, String name, int sequence)  {
+    public JourneyPatternStop(String stopGid, String stopId, String name, int sequence)  {
         this.stopGid = stopGid;
         this.stopId = stopId;
         this.name = name;
