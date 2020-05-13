@@ -43,10 +43,11 @@ public class Main {
 
             scheduler.scheduleAtFixedRate(() -> {
                 try {
-                    // Query closed stops, affected journey patterns and affected journeys
+                    //Query closed stops, affected journey patterns and affected journeys
                     Optional<InternalMessages.StopCancellations> message = closedStopHandler.queryAndProcessResults(doiStops);
-                    // Query disruption routes and affected journeys
-                    List<DisruptionRoute> disruptionRoutes = disruptionRouteHandler.queryAndProcessResults();
+                    //Query disruption routes and affected journeys
+                    List<DisruptionRoute> disruptionRoutes = disruptionRouteHandler.queryAndProcessResults(doiStops);
+                    //TODO combine stop cancellations from closedStopHandler and disruptionRouteHandler
 
                     if (message.isPresent()) {
                         publisher.sendStopCancellations(message.get());
