@@ -9,7 +9,7 @@ public class Journey {
     private final String routeName;
     private final int direction;
     private final String startTime;
-    private final String journeyPatternId;
+    public final String journeyPatternId;
 
     public Journey(String tripid, String operatingDay, String routeName, int direction, String startTime, String journeyPatternId) {
         this.tripId = tripid;

@@ -37,17 +37,16 @@ public class Main {
             final PulsarApplicationContext context = app.getContext();
 
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, doiConnString);
-            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(ommConnString);
             final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, ommConnString, doiConnString);
+            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, ommConnString, doiConnString);
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
             scheduler.scheduleAtFixedRate(() -> {
                 try {
-                    // Query disruption routes and affected journeys
-                    List<DisruptionRoute> disruptionRoutes = disruptionRouteHandler.queryAndProcessResults();
-
                     // Query closed stops, affected journey patterns and affected journeys
                     Optional<InternalMessages.StopCancellations> message = closedStopHandler.queryAndProcessResults(doiStops);
+                    // Query disruption routes and affected journeys
+                    List<DisruptionRoute> disruptionRoutes = disruptionRouteHandler.queryAndProcessResults();
 
                     if (message.isPresent()) {
                         publisher.sendStopCancellations(message.get());

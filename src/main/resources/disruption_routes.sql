@@ -19,5 +19,5 @@ SELECT DR.disruption_routes_id AS DISRUPTION_ROUTES_ID,
     LEFT JOIN omm_db.dbo.deviation_cases AS DC ON DC.deviation_case_id = DR.deviation_case_id
     LEFT JOIN omm_db.dbo.bulletins AS B ON B.bulletins_id = DC.bulletin_id
     LEFT JOIN bulletin_localized_messages AS BLM ON DC.bulletin_id = BLM.bulletins_id
-    WHERE (DC.valid_to >= CURRENT_TIMESTAMP-5 OR DC.valid_to IS NULL)
+    WHERE (DC.valid_to >= CURRENT_TIMESTAMP-7 OR DC.valid_to IS NULL)
     ORDER BY DR.last_modified DESC;

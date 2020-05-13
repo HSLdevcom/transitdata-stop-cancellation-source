@@ -1,10 +1,9 @@
-package fi.hsl.transitdata.stop.cancellations.closed.stop.source;
+package fi.hsl.transitdata.stop.cancellations.disruption.route.source;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.stop.cancellations.db.QueryUtils;
 import fi.hsl.transitdata.stop.cancellations.models.JourneyPattern;
 import fi.hsl.transitdata.stop.cancellations.models.JourneyPatternStop;
-import fi.hsl.transitdata.stop.cancellations.closed.stop.source.models.ClosedStop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +12,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class DoiAffectedJourneyPatternSource {
 
@@ -21,13 +19,11 @@ public class DoiAffectedJourneyPatternSource {
     private final Connection dbConnection;
     private final String queryString;
     private final String timeZone;
-    private final int queryFutureInDays;
 
     private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(), "/affected_journey_patterns_by_stops.sql");
+        queryString = QueryUtils.createQuery(getClass(), "/affected_journey_patterns_by_ids.sql");
         timeZone = context.getConfig().getString("omm.timezone");
-        queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
     }
 
     public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
@@ -35,15 +31,13 @@ public class DoiAffectedJourneyPatternSource {
         return new DoiAffectedJourneyPatternSource(context, connection);
     }
 
-    public Map<String, JourneyPattern> queryByClosedStops(List<ClosedStop> closedStops) throws SQLException {
-        log.info("Querying affected journey patterns from database");
+    public Map<String, JourneyPattern> queryByJourneyPatternIds(List<String> journeyPatternIds) throws SQLException {
+        log.info("Querying journey patterns by disruption routes from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
-        String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
-        String affectedStops = closedStops.stream().map(sc -> sc.stopGid).collect(Collectors.joining(","));
+        String queryJourneyPatternIds = String.join(",", journeyPatternIds);
         String preparedQueryString = queryString
                 .replaceAll("VAR_DATE_NOW", dateNow)
-                .replace("VAR_TO_DATE", dateTo)
-                .replace("VAR_AFFECTED_STOP_GIDS", affectedStops);
+                .replace("VAR_JP_IDS", queryJourneyPatternIds);
 
         try (PreparedStatement statement = dbConnection.prepareStatement(preparedQueryString)) {
             ResultSet resultSet = statement.executeQuery();
@@ -56,8 +50,8 @@ public class DoiAffectedJourneyPatternSource {
     }
 
     private Map<String, JourneyPattern> parseAffectedJourneyPatterns(ResultSet resultSet) throws SQLException {
-        log.info("Processing affected journey pattern resultset");
-        Map<String, JourneyPattern> affectedJourneyPatterns = new HashMap<>();
+        log.info("Processing journey pattern resultset by disruption routes");
+        Map<String, JourneyPattern> journeyPatterns = new HashMap<>();
         while (resultSet.next()) {
             try {
                 String stopGid = resultSet.getString("SP_Gid");
@@ -66,19 +60,19 @@ public class DoiAffectedJourneyPatternSource {
                 int stopSequence = resultSet.getInt("PIJP_SequenceNumber");
                 String jpId = resultSet.getString("JP_Id");
                 if (stopId != null) {
-                    if (!affectedJourneyPatterns.containsKey(jpId)) {
+                    if (!journeyPatterns.containsKey(jpId)) {
                         int jpPointCount = resultSet.getInt("JP_PointCount");
-                        affectedJourneyPatterns.put(jpId, new JourneyPattern(jpId, jpPointCount));
+                        journeyPatterns.put(jpId, new JourneyPattern(jpId, jpPointCount));
                     }
-                    affectedJourneyPatterns.get(jpId).addStop(new JourneyPatternStop(stopGid, stopId, stopName, stopSequence));
+                    journeyPatterns.get(jpId).addStop(new JourneyPatternStop(stopGid, stopId, stopName, stopSequence));
                 } else {
                     log.warn("found null stopId with sequence {} for jpId {}", stopSequence, jpId);
                 }
             } catch (IllegalArgumentException iae) {
-                log.error("Error while parsing the affected journey patterns resultset", iae);
+                log.error("Error while parsing the journey patterns for disruption routes", iae);
             }
         }
-        log.info("found {} affected journey patterns", affectedJourneyPatterns.size());
-        return affectedJourneyPatterns;
+        log.info("found {} journey patterns for disruption routes", journeyPatterns.size());
+        return journeyPatterns;
     }
 }

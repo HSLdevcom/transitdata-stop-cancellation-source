@@ -1,7 +1,8 @@
-package fi.hsl.transitdata.stop.cancellations.closed.stop.source;
+package fi.hsl.transitdata.stop.cancellations.disruption.route.source;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.stop.cancellations.db.QueryUtils;
+import fi.hsl.transitdata.stop.cancellations.disruption.route.source.models.DisruptionRoute;
 import fi.hsl.transitdata.stop.cancellations.models.Journey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class DoiAffectedJourneySource {
 
@@ -21,7 +21,7 @@ public class DoiAffectedJourneySource {
 
     private DoiAffectedJourneySource(PulsarApplicationContext context, Connection connection) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(),"/affected_journeys_by_journey_patterns.sql");
+        queryString = QueryUtils.createQuery(getClass(),"/affected_journeys_by_disruption_routes.sql");
         timeZone = context.getConfig().getString("omm.timezone");
         queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
         log.info("Using {} future days in querying affected journeys", queryFutureInDays);
@@ -32,28 +32,29 @@ public class DoiAffectedJourneySource {
         return new DoiAffectedJourneySource(context, connection);
     }
 
-    public Map<String, List<Journey>> queryByJourneyPatternIds(List<String> affectedJourneyPatternIds) throws SQLException {
-        log.info("Querying affected journeys from database");
+    public List<Journey> getByDisruptionRoute(DisruptionRoute disruptionRoute) throws SQLException {
+        log.info("Querying affected journeys by disruption routes from database");
         String dateFrom = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
-        String varAffectedJpIds = affectedJourneyPatternIds.stream().collect(Collectors.joining(","));
         String preparedString = queryString
-                .replace("VAR_FROM_DATE", dateFrom)
-                .replace("VAR_TO_DATE", dateTo)
-                .replace("VAR_AFFECTED_JP_IDS", varAffectedJpIds);
+                .replace("VAR_AFFECTED_ROUTE_IDS", disruptionRoute.affectedRoutes)
+                .replace("VAR_DATE_FROM", dateFrom)
+                .replace("VAR_DATE_TO", dateTo)
+                .replace("VAR_MIN_DEP_TIME", disruptionRoute.getValidFrom().orElse(dateFrom))
+                .replace("VAR_MAX_DEP_TIME",  disruptionRoute.getValidTo().orElse(dateTo));
         try (PreparedStatement statement = dbConnection.prepareStatement(preparedString)) {
             ResultSet resultSet = statement.executeQuery();
             return parseJourneys(resultSet);
         }
         catch (Exception e) {
-            log.error("Error while  querying and processing affected journeys", e);
+            log.error("Error while  querying and processing affected journeys by disruption routes", e);
             throw e;
         }
     }
 
-    private Map<String, List<Journey>> parseJourneys(ResultSet resultSet) throws SQLException {
-        log.info("Processing affected journeys info resultset");
-        Map<String, List<Journey>> map = new HashMap<>();
+    private List<Journey> parseJourneys(ResultSet resultSet) throws SQLException {
+        log.info("Processing affected journeys by disruption routes resultset");
+        List<Journey> journeys = new ArrayList<>();
         while (resultSet.next()) {
             try {
                 String tripId = resultSet.getString("DVJ_Id");
@@ -63,19 +64,12 @@ public class DoiAffectedJourneySource {
                 String startTime = resultSet.getString("START_TIME");
                 String journeyPatternId = resultSet.getString("JP_Id");
                 Journey affectedJourney = new Journey(tripId, operatingDay, routeName, direction, startTime, journeyPatternId);
-                if (!map.containsKey(journeyPatternId)) {
-                    map.put(journeyPatternId, new LinkedList<>());
-                }
-                map.get(journeyPatternId).add(affectedJourney);
+                journeys.add(affectedJourney);
             } catch (IllegalArgumentException iae) {
                 log.error("Error while parsing affected journeys resultset", iae);
             }
         }
-        log.info("Found affected journeys for {} journey patterns", map.size());
-        for (String journeyPatternId : map.keySet()) {
-            log.info("Found {} affected journeys for affected journey pattern id {}", map.get(journeyPatternId).size(), journeyPatternId);
-        }
-        return map;
+        log.info("Found {} affected journeys for disruption route", journeys.size());
+        return journeys;
     }
-
 }
