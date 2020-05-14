@@ -32,11 +32,11 @@ public class DoiAffectedJourneySource {
         return new DoiAffectedJourneySource(context, connection);
     }
 
-    public Map<String, List<Journey>> queryByJourneyPatternIds(List<String> affectedJourneyPatternIds) throws SQLException {
+    public Map<String, List<Journey>> queryByJourneyPatternIds(Collection<String> affectedJourneyPatternIds) throws SQLException {
         log.info("Querying affected journeys from database");
         String dateFrom = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
-        String varAffectedJpIds = affectedJourneyPatternIds.stream().collect(Collectors.joining(","));
+        String varAffectedJpIds = String.join(",", affectedJourneyPatternIds);
         String preparedString = queryString
                 .replace("VAR_FROM_DATE", dateFrom)
                 .replace("VAR_TO_DATE", dateTo)

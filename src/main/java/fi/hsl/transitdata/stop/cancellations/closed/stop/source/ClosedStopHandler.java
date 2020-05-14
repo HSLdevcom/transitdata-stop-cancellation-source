@@ -10,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ClosedStopHandler {
@@ -32,10 +29,10 @@ public class ClosedStopHandler {
     public Optional<InternalMessages.StopCancellations> queryAndProcessResults(DoiStopInfoSource doiStops) throws SQLException{
         List<ClosedStop> closedStops = closedStopSource.queryAndProcessResults(doiStops.getStopInfo());
         Map<String, JourneyPattern> affectedJourneyPatternById = affectedJourneyPatternSource.queryByClosedStops(closedStops);
-        Map<String, List<Journey>> affectedJourneysByJourneyPatternId = affectedJourneySource.queryByJourneyPatternIds(new ArrayList<>(affectedJourneyPatternById.keySet()));
+        Map<String, List<Journey>> affectedJourneysByJourneyPatternId = affectedJourneySource.queryByJourneyPatternIds(affectedJourneyPatternById.keySet());
         addAffectedJourneysToJourneyPatterns(affectedJourneyPatternById, affectedJourneysByJourneyPatternId);
         addAffectedJourneyPatternsToClosedStops(closedStops, affectedJourneyPatternById);
-        return createStopCancellationsMessage(closedStops, new ArrayList<>(affectedJourneyPatternById.values()));
+        return createStopCancellationsMessage(closedStops, affectedJourneyPatternById.values());
     }
 
     public static void addAffectedJourneysToJourneyPatterns(
@@ -59,11 +56,11 @@ public class ClosedStopHandler {
 
     }
 
-    public static Optional<InternalMessages.StopCancellations> createStopCancellationsMessage(List<ClosedStop> closedStops, List<JourneyPattern> journeyPatterns)  {
+    public static Optional<InternalMessages.StopCancellations> createStopCancellationsMessage(Collection<ClosedStop> closedStops, Collection<JourneyPattern> journeyPatterns)  {
         if (!closedStops.isEmpty()) {
             InternalMessages.StopCancellations.Builder builder = InternalMessages.StopCancellations.newBuilder();
-            builder.addAllStopCancellations(closedStops.stream().map(sc -> sc.getAsProtoBuf()).collect(Collectors.toList()));
-            builder.addAllAffectedJourneyPatterns(journeyPatterns.stream().map(jp -> jp.getAsProtoBuf()).collect(Collectors.toList()));
+            builder.addAllStopCancellations(closedStops.stream().map(ClosedStop::getAsProtoBuf).collect(Collectors.toList()));
+            builder.addAllAffectedJourneyPatterns(journeyPatterns.stream().map(JourneyPattern::getAsProtoBuf).collect(Collectors.toList()));
             return Optional.of(builder.build());
         } else {
             return Optional.empty();
