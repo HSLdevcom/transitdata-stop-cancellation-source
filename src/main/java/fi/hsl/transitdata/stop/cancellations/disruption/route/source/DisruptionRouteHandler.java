@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DisruptionRouteHandler {
@@ -26,28 +27,35 @@ public class DisruptionRouteHandler {
         affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
     }
 
-    public List<DisruptionRoute> queryAndProcessResults (DoiStopInfoSource doiStops)  throws SQLException {
-        List<DisruptionRoute> disruptionRoutes = disruptionRouteSource.queryAndProcessResults();
-        log.info("Processing {} disruption routes", disruptionRoutes.size());
+    public Optional<List<DisruptionRoute>> queryAndProcessResults (DoiStopInfoSource doiStops)  throws SQLException {
+        List<DisruptionRoute> disruptionRoutes = disruptionRouteSource.queryAndProcessResults(doiStops.getStopsByGidMap());
+
+        if (disruptionRoutes.size() == 0) return Optional.empty();
 
         for (DisruptionRoute disruptionRoute : disruptionRoutes) {
             List<Journey> affectedJourneys = affectedJourneySource.getByDisruptionRoute(disruptionRoute);
             disruptionRoute.addAffectedJourneys(affectedJourneys);
         }
 
+        // get unique journey pattern ids from affected journeys for querying affected journey patterns
         List<String> affectedJourneyPatternIds = disruptionRoutes.stream().map(DisruptionRoute::getAffectedJourneyPatternIds)
                 .flatMap(List::stream)
                 .distinct().collect(Collectors.toList());
 
-        Map<String, JourneyPattern> affectedJourneyPatterns = affectedJourneyPatternSource.queryByJourneyPatternIds(affectedJourneyPatternIds);
+        if (affectedJourneyPatternIds.size() == 0) return Optional.empty();
 
-        //TODO make sure that stops of the affected journey patterns are in the right order
-        //TODO find stops that are cancelled based on start & end stops of disruption routes (from affected journey patterns) (get matching stopIds from DoiStopInfoSource doiStops)
+        Map<String, JourneyPattern> affectedJourneyPatternsById = affectedJourneyPatternSource.queryByJourneyPatternIds(affectedJourneyPatternIds);
+        affectedJourneyPatternsById.values().forEach(JourneyPattern::orderStopsBySequence);
+
+        for (DisruptionRoute dr : disruptionRoutes) {
+            dr.findAddAffectedStops(affectedJourneyPatternsById);
+        }
+
         //TODO create stop cancellations for affected stops considering the valid from/to times of the disruption routes
 
         //TODO make sure that it's okay to map stop cancellations (by disruption routes) to journey patterns
         //TODO change return type when needed
-        return disruptionRoutes;
+        return Optional.of(disruptionRoutes);
     }
 
 }

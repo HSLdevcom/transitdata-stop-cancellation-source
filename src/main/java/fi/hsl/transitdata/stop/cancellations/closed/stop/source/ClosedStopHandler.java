@@ -27,7 +27,7 @@ public class ClosedStopHandler {
     }
 
     public Optional<InternalMessages.StopCancellations> queryAndProcessResults(DoiStopInfoSource doiStops) throws SQLException{
-        List<ClosedStop> closedStops = closedStopSource.queryAndProcessResults(doiStops.getStopInfo());
+        List<ClosedStop> closedStops = closedStopSource.queryAndProcessResults(doiStops.getStopsByGidMap());
         Map<String, JourneyPattern> affectedJourneyPatternById = affectedJourneyPatternSource.queryByClosedStops(closedStops);
         Map<String, List<Journey>> affectedJourneysByJourneyPatternId = affectedJourneySource.queryByJourneyPatternIds(affectedJourneyPatternById.keySet());
         addAffectedJourneysToJourneyPatterns(affectedJourneyPatternById, affectedJourneysByJourneyPatternId);

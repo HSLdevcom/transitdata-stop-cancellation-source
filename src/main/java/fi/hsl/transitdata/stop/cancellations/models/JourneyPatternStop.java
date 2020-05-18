@@ -6,10 +6,10 @@ public class JourneyPatternStop {
 
     private final String stopGid;
     public final String stopId;
-    private final int sequence;
+    private final Integer sequence;
     private final String name;
 
-    public JourneyPatternStop(String stopGid, String stopId, String name, int sequence)  {
+    public JourneyPatternStop(String stopGid, String stopId, String name, Integer sequence)  {
         this.stopGid = stopGid;
         this.stopId = stopId;
         this.name = name;
@@ -21,6 +21,10 @@ public class JourneyPatternStop {
         builder.setStopId(stopId);
         builder.setStopSequence(sequence);
         return builder.build();
+    }
+
+    public Integer getSequence() {
+        return this.sequence;
     }
 
 }

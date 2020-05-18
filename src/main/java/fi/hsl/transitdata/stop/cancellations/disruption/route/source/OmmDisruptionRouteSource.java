@@ -2,12 +2,14 @@ package fi.hsl.transitdata.stop.cancellations.disruption.route.source;
 
 import fi.hsl.transitdata.stop.cancellations.db.QueryUtils;
 import fi.hsl.transitdata.stop.cancellations.disruption.route.source.models.DisruptionRoute;
+import fi.hsl.transitdata.stop.cancellations.models.Stop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OmmDisruptionRouteSource {
 
@@ -25,11 +27,11 @@ public class OmmDisruptionRouteSource {
         return new OmmDisruptionRouteSource(connection);
     }
 
-    public List<DisruptionRoute> queryAndProcessResults() throws SQLException {
+    public List<DisruptionRoute> queryAndProcessResults(Map<String, Stop> stopsByGid) throws SQLException {
         log.info("Querying disruption routes from database");
         try (PreparedStatement statement = dbConnection.prepareStatement(queryString)) {
             ResultSet resultSet = statement.executeQuery();
-            return parseDisruptionRoutes(resultSet);
+            return parseDisruptionRoutes(resultSet, stopsByGid);
         }
         catch (Exception e) {
             log.error("Error while  querying and processing messages", e);
@@ -37,14 +39,16 @@ public class OmmDisruptionRouteSource {
         }
     }
 
-    private List<DisruptionRoute> parseDisruptionRoutes(ResultSet resultSet) throws SQLException {
+    private List<DisruptionRoute> parseDisruptionRoutes(ResultSet resultSet, Map<String, Stop> stopsByGid) throws SQLException {
         List<DisruptionRoute> disruptionRoutes = new ArrayList<>();
         log.info("Processing disruptionRoutes resultset");
         while (resultSet.next()) {
             try {
                 String disruptionRouteId = resultSet.getString("DISRUPTION_ROUTES_ID");
-                String startStopId = resultSet.getString("START_STOP_ID");
-                String endStopId = resultSet.getString("END_STOP_ID");
+                String startStopGid = resultSet.getString("START_STOP_ID");
+                String startStopId = stopsByGid.containsKey(startStopGid) ? stopsByGid.get(startStopGid).stopId : "";
+                String endStopGid = resultSet.getString("END_STOP_ID");
+                String endStopId = stopsByGid.containsKey(startStopGid) ? stopsByGid.get(endStopGid).stopId : "";
                 String affectedRoutes = resultSet.getString("AFFECTED_ROUTE_IDS");
                 String validFrom = resultSet.getString("DC_VALID_FROM");
                 String validTo = resultSet.getString("DC_VALID_TO");

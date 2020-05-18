@@ -30,7 +30,7 @@ public class DoiStopInfoSource {
         return new DoiStopInfoSource(context, connection);
     }
 
-    public Map<String, Stop> getStopInfo() {
+    public Map<String, Stop> getStopsByGidMap() {
         return stopMap;
     }
 
