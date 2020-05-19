@@ -8,7 +8,6 @@ import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.common.transitdata.proto.InternalMessages;
 import fi.hsl.transitdata.stop.cancellations.closed.stop.source.ClosedStopHandler;
 import fi.hsl.transitdata.stop.cancellations.disruption.route.source.DisruptionRouteHandler;
-import fi.hsl.transitdata.stop.cancellations.disruption.route.source.models.DisruptionRoute;
 import fi.hsl.transitdata.stop.cancellations.db.DoiStopInfoSource;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
@@ -44,13 +43,13 @@ public class Main {
             scheduler.scheduleAtFixedRate(() -> {
                 try {
                     //Query closed stops, affected journey patterns and affected journeys
-                    Optional<InternalMessages.StopCancellations> message = closedStopHandler.queryAndProcessResults(doiStops);
+                     Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopHandler.queryAndProcessResults(doiStops);
                     //Query disruption routes and affected journeys
-                    Optional<List<DisruptionRoute>> disruptionRoutes = disruptionRouteHandler.queryAndProcessResults(doiStops);
+                    Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteHandler.queryAndProcessResults(doiStops);
                     //TODO combine stop cancellations from closedStopHandler and disruptionRouteHandler
 
-                    if (message.isPresent()) {
-                        publisher.sendStopCancellations(message.get());
+                    if (stopCancellationsJourneyPatternDetour.isPresent()) {
+                        publisher.sendStopCancellations(stopCancellationsJourneyPatternDetour.get());
                     }
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);

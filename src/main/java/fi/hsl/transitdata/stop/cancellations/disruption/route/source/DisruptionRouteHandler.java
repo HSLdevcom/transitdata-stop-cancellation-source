@@ -1,6 +1,7 @@
 package fi.hsl.transitdata.stop.cancellations.disruption.route.source;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
+import fi.hsl.common.transitdata.proto.InternalMessages;
 import fi.hsl.transitdata.stop.cancellations.db.DoiStopInfoSource;
 import fi.hsl.transitdata.stop.cancellations.disruption.route.source.models.DisruptionRoute;
 import fi.hsl.transitdata.stop.cancellations.models.Journey;
@@ -22,12 +23,12 @@ public class DisruptionRouteHandler {
     final DoiAffectedJourneyPatternSource affectedJourneyPatternSource;
 
     public DisruptionRouteHandler(PulsarApplicationContext context, String ommConnString, String doiConnString) throws SQLException {
-        disruptionRouteSource = OmmDisruptionRouteSource.newInstance(ommConnString);
+        disruptionRouteSource = OmmDisruptionRouteSource.newInstance(context, ommConnString);
         affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString);
         affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
     }
 
-    public Optional<List<DisruptionRoute>> queryAndProcessResults (DoiStopInfoSource doiStops)  throws SQLException {
+    public Optional<InternalMessages.StopCancellations> queryAndProcessResults (DoiStopInfoSource doiStops)  throws SQLException {
         List<DisruptionRoute> disruptionRoutes = disruptionRouteSource.queryAndProcessResults(doiStops.getStopsByGidMap());
 
         if (disruptionRoutes.size() == 0) return Optional.empty();
@@ -51,11 +52,27 @@ public class DisruptionRouteHandler {
             dr.findAddAffectedStops(affectedJourneyPatternsById);
         }
 
-        //TODO create stop cancellations for affected stops considering the valid from/to times of the disruption routes
+        InternalMessages.StopCancellations message = getStopCancellationsProtoBuf(disruptionRoutes, affectedJourneyPatternsById);
 
-        //TODO make sure that it's okay to map stop cancellations (by disruption routes) to journey patterns
-        //TODO change return type when needed
-        return Optional.of(disruptionRoutes);
+        return Optional.of(message);
+    }
+
+    private InternalMessages.StopCancellations getStopCancellationsProtoBuf(List<DisruptionRoute> disruptionRoutes, Map<String, JourneyPattern> affectedJourneyPatternsById) {
+
+        List<InternalMessages.StopCancellations.StopCancellation> stopCancellations = disruptionRoutes.stream()
+                .map(DisruptionRoute::getAsStopCancellations)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        List<InternalMessages.JourneyPattern> affectedJourneyPatterns = disruptionRoutes.stream()
+                .map(dr -> dr.getAffectedJourneyPatterns(affectedJourneyPatternsById))
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        InternalMessages.StopCancellations.Builder builder = InternalMessages.StopCancellations.newBuilder();
+        builder.addAllStopCancellations(stopCancellations);
+        builder.addAllAffectedJourneyPatterns(affectedJourneyPatterns);
+        return builder.build();
     }
 
 }

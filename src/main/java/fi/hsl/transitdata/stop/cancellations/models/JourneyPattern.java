@@ -33,6 +33,13 @@ public class JourneyPattern {
         }
     }
 
+    public JourneyPattern createNewWithSameStops() {
+        JourneyPattern copy = new JourneyPattern(id, stopCount);
+        copy.stops.putAll(stops);
+        copy.stopsInOrder = stopsInOrder;
+        return copy;
+    }
+
     public void addAffectedJourneys(List<Journey> affectedJourneys) {
         this.journeys.addAll(affectedJourneys);
     }

@@ -54,6 +54,7 @@ public class ClosedStop {
 
     public InternalMessages.StopCancellations.StopCancellation getAsProtoBuf() {
         InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
+        builder.setCause(InternalMessages.StopCancellations.Cause.CLOSED_STOP);
         builder.setStopId(stopId);
         existsFromDate.ifPresent(localDateTime -> builder.setValidFromUnixS(toUtcEpochSeconds(localDateTime)));
         existsUpToDate.ifPresent(localDateTime -> builder.setValidToUnixS(toUtcEpochSeconds(localDateTime)));

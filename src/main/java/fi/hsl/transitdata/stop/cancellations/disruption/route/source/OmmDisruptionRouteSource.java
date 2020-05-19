@@ -1,5 +1,6 @@
 package fi.hsl.transitdata.stop.cancellations.disruption.route.source;
 
+import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.stop.cancellations.db.QueryUtils;
 import fi.hsl.transitdata.stop.cancellations.disruption.route.source.models.DisruptionRoute;
 import fi.hsl.transitdata.stop.cancellations.models.Stop;
@@ -16,15 +17,18 @@ public class OmmDisruptionRouteSource {
     private static final Logger log = LoggerFactory.getLogger(OmmDisruptionRouteSource.class);
     private final Connection dbConnection;
     private final String queryString;
+    private final String timezone;
 
-    private OmmDisruptionRouteSource(Connection connection) {
+    private OmmDisruptionRouteSource(Connection connection, String timezone) {
         dbConnection = connection;
         queryString = QueryUtils.createQuery(getClass() ,"/disruption_routes.sql");
+        this.timezone = timezone;
     }
 
-    public static OmmDisruptionRouteSource newInstance(String jdbcConnectionString) throws SQLException {
+    public static OmmDisruptionRouteSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
-        return new OmmDisruptionRouteSource(connection);
+        final String timezone = context.getConfig().getString("omm.timezone");
+        return new OmmDisruptionRouteSource(connection, timezone);
     }
 
     public List<DisruptionRoute> queryAndProcessResults(Map<String, Stop> stopsByGid) throws SQLException {
@@ -52,7 +56,7 @@ public class OmmDisruptionRouteSource {
                 String affectedRoutes = resultSet.getString("AFFECTED_ROUTE_IDS");
                 String validFrom = resultSet.getString("DC_VALID_FROM");
                 String validTo = resultSet.getString("DC_VALID_TO");
-                disruptionRoutes.add(new DisruptionRoute(disruptionRouteId, startStopId, endStopId, affectedRoutes, validFrom, validTo));
+                disruptionRoutes.add(new DisruptionRoute(disruptionRouteId, startStopId, endStopId, affectedRoutes, validFrom, validTo, timezone));
                 String name = resultSet.getString("NAME");
                 String description = resultSet.getString("DESCRIPTION");
                 String type = resultSet.getString("DC_TYPE");
