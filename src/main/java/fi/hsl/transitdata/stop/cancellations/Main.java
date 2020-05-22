@@ -19,6 +19,9 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Main {
 
@@ -43,7 +46,7 @@ public class Main {
             scheduler.scheduleAtFixedRate(() -> {
                 try {
                     //Query closed stops, affected journey patterns and affected journeys
-                     Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopHandler.queryAndProcessResults(doiStops);
+                    Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopHandler.queryAndProcessResults(doiStops);
                     //Query disruption routes and affected journeys
                     Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteHandler.queryAndProcessResults(doiStops);
                     //TODO combine stop cancellations from closedStopHandler and disruptionRouteHandler
@@ -65,6 +68,26 @@ public class Main {
         } catch (Exception e) {
             log.error("Exception at Main: " + e.getMessage(), e);
         }
+    }
+
+    private static InternalMessages.StopCancellations mergeStopCancellations(InternalMessages.StopCancellations... stopCancellationMessages) {
+        InternalMessages.StopCancellations.Builder stopCancellationsBuilder = InternalMessages.StopCancellations.newBuilder();
+
+        //Merge journey patterns from all stop cancellation messages
+        Stream.of(stopCancellationMessages)
+            .map(InternalMessages.StopCancellations::getAffectedJourneyPatternsList)
+            .flatMap(List::stream)
+            .collect(Collectors.toMap(InternalMessages.JourneyPattern::getJourneyPatternId, Function.identity()))
+            .values()
+            .forEach(stopCancellationsBuilder::addAffectedJourneyPatterns);
+
+        //Collect stop cancellations from all stop cancellation messages
+        Stream.of(stopCancellationMessages)
+            .map(InternalMessages.StopCancellations::getStopCancellationsList)
+            .flatMap(List::stream)
+            .forEach(stopCancellationsBuilder::addStopCancellations);
+
+        return stopCancellationsBuilder.build();
     }
 
     private static void closeApplication(PulsarApplication app, ScheduledExecutorService scheduler) {
