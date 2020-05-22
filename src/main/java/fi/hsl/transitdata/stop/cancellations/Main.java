@@ -49,11 +49,8 @@ public class Main {
                     Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopHandler.queryAndProcessResults(doiStops);
                     //Query disruption routes and affected journeys
                     Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteHandler.queryAndProcessResults(doiStops);
-                    //TODO combine stop cancellations from closedStopHandler and disruptionRouteHandler
 
-                    if (stopCancellationsJourneyPatternDetour.isPresent()) {
-                        publisher.sendStopCancellations(stopCancellationsJourneyPatternDetour.get());
-                    }
+                    publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(stopCancellationsClosed, stopCancellationsJourneyPatternDetour)));
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);
                     closeApplication(app, scheduler);
@@ -68,6 +65,13 @@ public class Main {
         } catch (Exception e) {
             log.error("Exception at Main: " + e.getMessage(), e);
         }
+    }
+
+    private static <T> T[] unwrapOptionals(Optional<T>... optionals) {
+        return (T[]) Stream.of(optionals)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toArray();
     }
 
     private static InternalMessages.StopCancellations mergeStopCancellations(InternalMessages.StopCancellations... stopCancellationMessages) {
