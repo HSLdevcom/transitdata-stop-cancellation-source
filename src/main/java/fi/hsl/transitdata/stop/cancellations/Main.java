@@ -7,8 +7,8 @@ import fi.hsl.common.pulsar.PulsarApplication;
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.common.transitdata.proto.InternalMessages;
 import fi.hsl.transitdata.stop.cancellations.closed.stop.source.ClosedStopHandler;
-import fi.hsl.transitdata.stop.cancellations.disruption.route.source.DisruptionRouteHandler;
 import fi.hsl.transitdata.stop.cancellations.db.DoiStopInfoSource;
+import fi.hsl.transitdata.stop.cancellations.disruption.route.source.DisruptionRouteHandler;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +46,11 @@ public class Main {
             scheduler.scheduleAtFixedRate(() -> {
                 try {
                     //Query closed stops, affected journey patterns and affected journeys
-                    Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopHandler.queryAndProcessResults(doiStops);
+                    final Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopHandler.queryAndProcessResults(doiStops);
                     //Query disruption routes and affected journeys
-                    Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteHandler.queryAndProcessResults(doiStops);
+                    final Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteHandler.queryAndProcessResults(doiStops);
 
-                    publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(stopCancellationsClosed, stopCancellationsJourneyPatternDetour)));
+                    publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(Arrays.asList(stopCancellationsClosed, stopCancellationsJourneyPatternDetour))));
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);
                     closeApplication(app, scheduler);
@@ -67,18 +67,15 @@ public class Main {
         }
     }
 
-    private static <T> T[] unwrapOptionals(Optional<T>... optionals) {
-        return (T[]) Stream.of(optionals)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toArray();
+    private static <T> Collection<T> unwrapOptionals(List<Optional<T>> optionals) {
+        return optionals.stream().filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
     }
 
-    private static InternalMessages.StopCancellations mergeStopCancellations(InternalMessages.StopCancellations... stopCancellationMessages) {
+    private static InternalMessages.StopCancellations mergeStopCancellations(Collection<InternalMessages.StopCancellations> stopCancellationMessages) {
         InternalMessages.StopCancellations.Builder stopCancellationsBuilder = InternalMessages.StopCancellations.newBuilder();
 
         //Merge journey patterns from all stop cancellation messages
-        Stream.of(stopCancellationMessages)
+        stopCancellationMessages.stream()
             .map(InternalMessages.StopCancellations::getAffectedJourneyPatternsList)
             .flatMap(List::stream)
             .collect(Collectors.toMap(InternalMessages.JourneyPattern::getJourneyPatternId, Function.identity()))
@@ -86,7 +83,7 @@ public class Main {
             .forEach(stopCancellationsBuilder::addAffectedJourneyPatterns);
 
         //Collect stop cancellations from all stop cancellation messages
-        Stream.of(stopCancellationMessages)
+        stopCancellationMessages.stream()
             .map(InternalMessages.StopCancellations::getStopCancellationsList)
             .flatMap(List::stream)
             .forEach(stopCancellationsBuilder::addStopCancellations);
