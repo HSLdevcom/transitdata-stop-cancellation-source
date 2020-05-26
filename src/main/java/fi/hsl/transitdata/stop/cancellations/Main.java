@@ -19,9 +19,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Main {
 
@@ -50,7 +48,9 @@ public class Main {
                     //Query disruption routes and affected journeys
                     final Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteHandler.queryAndProcessResults(doiStops);
 
-                    publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(Arrays.asList(stopCancellationsClosed, stopCancellationsJourneyPatternDetour))));
+                    if (stopCancellationsClosed.isPresent() || stopCancellationsJourneyPatternDetour.isPresent()) {
+                        publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(Arrays.asList(stopCancellationsClosed, stopCancellationsJourneyPatternDetour))));
+                    }
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);
                     closeApplication(app, scheduler);
@@ -74,21 +74,42 @@ public class Main {
     private static InternalMessages.StopCancellations mergeStopCancellations(Collection<InternalMessages.StopCancellations> stopCancellationMessages) {
         InternalMessages.StopCancellations.Builder stopCancellationsBuilder = InternalMessages.StopCancellations.newBuilder();
 
-        //Merge journey patterns from all stop cancellation messages
-        stopCancellationMessages.stream()
-            .map(InternalMessages.StopCancellations::getAffectedJourneyPatternsList)
-            .flatMap(List::stream)
-            .collect(Collectors.toMap(InternalMessages.JourneyPattern::getJourneyPatternId, Function.identity()))
-            .values()
-            .forEach(stopCancellationsBuilder::addAffectedJourneyPatterns);
+        if (stopCancellationMessages.size() == 1) {
+            return stopCancellationMessages.iterator().next();
+        } else {
+            //Merge journey patterns from all stop cancellation messages
+            stopCancellationMessages.stream()
+                    .map(InternalMessages.StopCancellations::getAffectedJourneyPatternsList)
+                    .flatMap(List::stream)
+                    .collect(Collectors.groupingBy(InternalMessages.JourneyPattern::getJourneyPatternId)) //since there may be many with same jpId
+                    .values().stream()
+                    .map(Main::combineTripsOfJourneyPatterns)
+                    .forEach(stopCancellationsBuilder::addAffectedJourneyPatterns);
 
-        //Collect stop cancellations from all stop cancellation messages
-        stopCancellationMessages.stream()
-            .map(InternalMessages.StopCancellations::getStopCancellationsList)
-            .flatMap(List::stream)
-            .forEach(stopCancellationsBuilder::addStopCancellations);
+            //Collect stop cancellations from all stop cancellation messages
+            stopCancellationMessages.stream()
+                    .map(InternalMessages.StopCancellations::getStopCancellationsList)
+                    .flatMap(List::stream)
+                    .forEach(stopCancellationsBuilder::addStopCancellations);
 
-        return stopCancellationsBuilder.build();
+            return stopCancellationsBuilder.build();
+        }
+    }
+
+    // combines affected trips of one or more journeyPattern(s) by adding their unique trips to a single returned journeyPattern
+    private static InternalMessages.JourneyPattern combineTripsOfJourneyPatterns(List<InternalMessages.JourneyPattern> repeatedJourneyPatterns) {
+        if (repeatedJourneyPatterns.size() == 1) {
+            return repeatedJourneyPatterns.iterator().next();
+        } else {
+            InternalMessages.JourneyPattern.Builder builder = repeatedJourneyPatterns.iterator().next().toBuilder();
+            List <InternalMessages.TripInfo> uniqueTrips = repeatedJourneyPatterns.stream()
+                    .map(InternalMessages.JourneyPattern::getTripsList)
+                    .flatMap(List::stream)
+                    .distinct()
+                    .collect(Collectors.toList());
+            builder.clearTrips().addAllTrips(uniqueTrips);
+            return builder.build();
+        }
     }
 
     private static void closeApplication(PulsarApplication app, ScheduledExecutorService scheduler) {

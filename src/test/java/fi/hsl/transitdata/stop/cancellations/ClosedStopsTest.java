@@ -61,7 +61,7 @@ public class ClosedStopsTest {
         assertEquals(3, message.get().getAffectedJourneyPatterns(0).getStopsCount());
         assertEquals(4, message.get().getAffectedJourneyPatterns(1).getStopsCount());
         assertEquals("11", message.get().getAffectedJourneyPatterns(0).getStops(0).getStopId());
-        assertEquals("22", message.get().getAffectedJourneyPatterns(1).getStops(0).getStopId());
+        assertEquals("21", message.get().getAffectedJourneyPatterns(1).getStops(0).getStopId());
     }
 
 }
