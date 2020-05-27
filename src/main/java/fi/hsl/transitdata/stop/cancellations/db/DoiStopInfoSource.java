@@ -1,7 +1,7 @@
-package fi.hsl.transitdata.omm.db;
+package fi.hsl.transitdata.stop.cancellations.db;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
-import fi.hsl.transitdata.omm.models.Stop;
+import fi.hsl.transitdata.stop.cancellations.models.Stop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ public class DoiStopInfoSource {
         return new DoiStopInfoSource(context, connection);
     }
 
-    public Map<String, Stop> getStopInfo() {
+    public Map<String, Stop> getStopsByGidMap() {
         return stopMap;
     }
 

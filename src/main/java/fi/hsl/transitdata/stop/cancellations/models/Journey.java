@@ -1,17 +1,17 @@
-package fi.hsl.transitdata.omm.models;
+package fi.hsl.transitdata.stop.cancellations.models;
 
 import fi.hsl.common.transitdata.proto.InternalMessages;
 
-public class AffectedJourney {
+public class Journey {
 
     private final String tripId;
     private final String operatingDay;
     private final String routeName;
     private final int direction;
     private final String startTime;
-    private final String journeyPatternId;
+    public final String journeyPatternId;
 
-    public AffectedJourney(String tripid, String operatingDay, String routeName, int direction, String startTime, String journeyPatternId) {
+    public Journey(String tripid, String operatingDay, String routeName, int direction, String startTime, String journeyPatternId) {
         this.tripId = tripid;
         this.operatingDay = operatingDay;
         this.routeName = routeName;

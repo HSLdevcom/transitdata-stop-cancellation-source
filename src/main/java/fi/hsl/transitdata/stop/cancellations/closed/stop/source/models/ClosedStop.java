@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm.models;
+package fi.hsl.transitdata.stop.cancellations.closed.stop.source.models;
 import fi.hsl.common.transitdata.proto.InternalMessages;
 
 import java.time.LocalDateTime;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class StopCancellation {
+public class ClosedStop {
 
     public final String stopId;
     public final String stopGid;
@@ -20,7 +20,7 @@ public class StopCancellation {
     private final String timezone;
     private final List<String> affectedJourneyPatternIds;
 
-    public StopCancellation (String stopId, String stopGid, String stopName, long stopDeviationsId, String description, String existsFromDate, String existsUpToDate, String timezone) {
+    public ClosedStop(String stopId, String stopGid, String stopName, long stopDeviationsId, String description, String existsFromDate, String existsUpToDate, String timezone) {
         this.stopId = stopId;
         this.stopGid = stopGid;
         this.stopName = stopName;
@@ -54,6 +54,7 @@ public class StopCancellation {
 
     public InternalMessages.StopCancellations.StopCancellation getAsProtoBuf() {
         InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
+        builder.setCause(InternalMessages.StopCancellations.Cause.CLOSED_STOP);
         builder.setStopId(stopId);
         existsFromDate.ifPresent(localDateTime -> builder.setValidFromUnixS(toUtcEpochSeconds(localDateTime)));
         existsUpToDate.ifPresent(localDateTime -> builder.setValidToUnixS(toUtcEpochSeconds(localDateTime)));

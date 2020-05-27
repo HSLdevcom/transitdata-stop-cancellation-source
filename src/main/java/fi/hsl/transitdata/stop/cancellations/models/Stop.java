@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm.models;
+package fi.hsl.transitdata.stop.cancellations.models;
 
 public class Stop {
 

@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.omm.db;
+package fi.hsl.transitdata.stop.cancellations.db;
 
 import fi.hsl.common.files.FileUtils;
 import org.slf4j.Logger;
@@ -15,8 +15,7 @@ public class QueryUtils {
     private static final Logger log = LoggerFactory.getLogger(QueryUtils.class);
 
     public static String createQuery(Class c, String resourceFileName) {
-        try {
-            InputStream stream = c.getResourceAsStream(resourceFileName);
+        try (InputStream stream = c.getResourceAsStream(resourceFileName)) {
             return FileUtils.readFileFromStreamOrThrow(stream);
         } catch (Exception e) {
             log.error("Error in reading sql from file:", e);

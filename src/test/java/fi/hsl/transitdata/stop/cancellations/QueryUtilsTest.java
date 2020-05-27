@@ -1,6 +1,6 @@
-package fi.hsl.transitdata.omm;
+package fi.hsl.transitdata.stop.cancellations;
 
-import fi.hsl.transitdata.omm.db.QueryUtils;
+import fi.hsl.transitdata.stop.cancellations.db.QueryUtils;
 import org.junit.Test;
 
 import java.time.Instant;
