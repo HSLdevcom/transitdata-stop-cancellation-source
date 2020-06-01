@@ -22,8 +22,8 @@ SELECT DISTINCT CONVERT(CHAR(16), DVJ.Id) AS DVJ_Id,
     AND L.Gid IN (VAR_AFFECTED_ROUTE_IDS)
     AND OT.Name = 'VehicleJourney'
     AND VJT.IsWorkedOnDirectionOfLineGid IS NOT NULL
-    AND DVJ.OperatingDayDate >= CURRENT_TIMESTAMP-7
+    AND DVJ.OperatingDayDate >= 'VAR_DATE_FROM'
     AND DVJ.OperatingDayDate <= 'VAR_DATE_TO'
-    AND (DVJ.OperatingDayDate + VJ.PlannedStartOffsetDateTime) >= CURRENT_TIMESTAMP-7
+    AND (DVJ.OperatingDayDate + VJ.PlannedStartOffsetDateTime) >= 'VAR_MIN_DEP_TIME'
     AND (DVJ.OperatingDayDate + VJ.PlannedStartOffsetDateTime) <= 'VAR_MAX_DEP_TIME'
     AND DVJ.IsReplacedById IS NULL;

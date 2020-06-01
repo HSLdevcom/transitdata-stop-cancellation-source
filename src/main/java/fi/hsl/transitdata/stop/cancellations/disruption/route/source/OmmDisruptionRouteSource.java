@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,10 @@ public class OmmDisruptionRouteSource {
 
     public List<DisruptionRoute> queryAndProcessResults(Map<String, Stop> stopsByGid) throws SQLException {
         log.info("Querying disruption routes from database");
-        try (PreparedStatement statement = dbConnection.prepareStatement(queryString)) {
+        String dateFrom = QueryUtils.localDateAsString(Instant.now(), timezone);
+        String preparedString = queryString.replace("VAR_DATE_FROM", dateFrom);
+
+        try (PreparedStatement statement = dbConnection.prepareStatement(preparedString)) {
             ResultSet resultSet = statement.executeQuery();
             return parseDisruptionRoutes(resultSet, stopsByGid);
         }
