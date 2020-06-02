@@ -84,9 +84,10 @@ public class DisruptionRoute {
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
-        validateStopCancellations(cancelledStopIds);
 
-        return cancelledStopIds.stream().map(stopId -> {
+        if (cancelledStopIds.size() > 0)  {
+            validateStopCancellations(cancelledStopIds);
+            return cancelledStopIds.stream().map(stopId -> {
                 InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
                 builder.setCause(InternalMessages.StopCancellations.Cause.JOURNEY_PATTERN_DETOUR);
                 builder.setStopId(stopId);
@@ -96,6 +97,10 @@ public class DisruptionRoute {
                 return builder.build();
             }
         ).collect(Collectors.toList());
+        } else  {
+            log.info("No stop cancellations were created by disruption route {}", disruptionRouteId);
+            return Collections.emptyList();
+        }
     }
 
     private void validateStopCancellations(List<String> cancelledStopIds) {
