@@ -28,7 +28,7 @@ public class DisruptionRouteHandler {
         affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
     }
 
-    public Optional<InternalMessages.StopCancellations> queryAndProcessResults (DoiStopInfoSource doiStops)  throws SQLException {
+    public Optional<InternalMessages.StopCancellations> queryAndProcessResults (DoiStopInfoSource doiStops) throws SQLException {
         List<DisruptionRoute> disruptionRoutes = disruptionRouteSource.queryAndProcessResults(doiStops.getStopsByGidMap());
 
         if (disruptionRoutes.size() == 0) return Optional.empty();
