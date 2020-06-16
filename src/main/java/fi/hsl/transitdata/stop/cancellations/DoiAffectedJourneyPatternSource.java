@@ -1,4 +1,4 @@
-package fi.hsl.transitdata.stop.cancellations.disruption.route.source;
+package fi.hsl.transitdata.stop.cancellations;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.transitdata.stop.cancellations.db.QueryUtils;
@@ -32,7 +32,7 @@ public class DoiAffectedJourneyPatternSource {
     }
 
     public Map<String, JourneyPattern> queryByJourneyPatternIds(List<String> journeyPatternIds) throws SQLException {
-        log.info("Querying journey patterns by disruption routes from database");
+        log.info("Querying journey patterns from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String queryJourneyPatternIds = String.join(",", journeyPatternIds);
         String preparedQueryString = queryString
@@ -50,7 +50,7 @@ public class DoiAffectedJourneyPatternSource {
     }
 
     private Map<String, JourneyPattern> parseAffectedJourneyPatterns(ResultSet resultSet) throws SQLException {
-        log.info("Processing journey pattern resultset by disruption routes");
+        log.info("Processing journey pattern resultset");
         Map<String, JourneyPattern> journeyPatterns = new HashMap<>();
         while (resultSet.next()) {
             try {
@@ -72,7 +72,8 @@ public class DoiAffectedJourneyPatternSource {
                 log.error("Error while parsing the journey patterns for disruption routes", iae);
             }
         }
-        log.info("found {} journey patterns for disruption routes", journeyPatterns.size());
+        log.info("found {} affected journey patterns", journeyPatterns.size());
+        journeyPatterns.values().forEach(JourneyPattern::orderStopsBySequence);
         return journeyPatterns;
     }
 }

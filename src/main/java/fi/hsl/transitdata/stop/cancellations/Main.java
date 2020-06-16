@@ -8,6 +8,7 @@ import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.common.transitdata.proto.InternalMessages;
 import fi.hsl.transitdata.stop.cancellations.closed.stop.source.ClosedStopHandler;
 import fi.hsl.transitdata.stop.cancellations.db.DoiStopInfoSource;
+import fi.hsl.transitdata.stop.cancellations.disruption.journey.source.DisruptionJourneyHandler;
 import fi.hsl.transitdata.stop.cancellations.disruption.route.source.DisruptionRouteHandler;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.slf4j.Logger;
@@ -39,14 +40,17 @@ public class Main {
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, doiConnString);
             final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, ommConnString, doiConnString);
             final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, ommConnString, doiConnString);
+            final DisruptionJourneyHandler disruptionJourneyHandler = new DisruptionJourneyHandler(context, doiConnString);
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
             scheduler.scheduleAtFixedRate(() -> {
                 try {
-                    //Query closed stops, affected journey patterns and affected journeys
+                    //Query and process stop cancellations by closed stops
                     final Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopHandler.queryAndProcessResults(doiStops);
-                    //Query disruption routes and affected journeys
+                    //Query and process stop cancellations by disruption routes and affected journeys
                     final Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteHandler.queryAndProcessResults(doiStops);
+                    // Query and process stop cancellations by disruption journeys
+                    final Optional<InternalMessages.StopCancellations> stopCancellationsDisruptionJourney = disruptionJourneyHandler.queryAndProcessResults(doiStops);
 
                     if (stopCancellationsClosed.isPresent() || stopCancellationsJourneyPatternDetour.isPresent()) {
                         publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(Arrays.asList(stopCancellationsClosed, stopCancellationsJourneyPatternDetour))));

@@ -2,6 +2,7 @@ package fi.hsl.transitdata.stop.cancellations.disruption.route.source;
 
 import fi.hsl.common.pulsar.PulsarApplicationContext;
 import fi.hsl.common.transitdata.proto.InternalMessages;
+import fi.hsl.transitdata.stop.cancellations.DoiAffectedJourneyPatternSource;
 import fi.hsl.transitdata.stop.cancellations.db.DoiStopInfoSource;
 import fi.hsl.transitdata.stop.cancellations.disruption.route.source.models.DisruptionRoute;
 import fi.hsl.transitdata.stop.cancellations.models.Journey;
@@ -28,7 +29,7 @@ public class DisruptionRouteHandler {
         affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
     }
 
-    public Optional<InternalMessages.StopCancellations> queryAndProcessResults (DoiStopInfoSource doiStops)  throws SQLException {
+    public Optional<InternalMessages.StopCancellations> queryAndProcessResults (DoiStopInfoSource doiStops) throws SQLException {
         List<DisruptionRoute> disruptionRoutes = disruptionRouteSource.queryAndProcessResults(doiStops.getStopsByGidMap());
 
         if (disruptionRoutes.size() == 0) return Optional.empty();
@@ -46,7 +47,6 @@ public class DisruptionRouteHandler {
         if (affectedJourneyPatternIds.size() == 0) return Optional.empty();
 
         Map<String, JourneyPattern> affectedJourneyPatternsById = affectedJourneyPatternSource.queryByJourneyPatternIds(affectedJourneyPatternIds);
-        affectedJourneyPatternsById.values().forEach(JourneyPattern::orderStopsBySequence);
 
         for (DisruptionRoute dr : disruptionRoutes) {
             dr.findAddAffectedStops(affectedJourneyPatternsById);
