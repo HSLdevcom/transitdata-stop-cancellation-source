@@ -45,11 +45,12 @@ public class Main {
 
             scheduler.scheduleAtFixedRate(() -> {
                 try {
-                    final Optional<InternalMessages.StopCancellations> stopCancellationsJourney = disruptionJourneyHandler.queryAndProcessResults(doiStops);
-                    //Query closed stops, affected journey patterns and affected journeys
+                    //Query and process stop cancellations by closed stops
                     final Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopHandler.queryAndProcessResults(doiStops);
-                    //Query disruption routes and affected journeys
+                    //Query and process stop cancellations by disruption routes and affected journeys
                     final Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteHandler.queryAndProcessResults(doiStops);
+                    // Query and process stop cancellations by disruption journeys
+                    final Optional<InternalMessages.StopCancellations> stopCancellationsDisruptionJourney = disruptionJourneyHandler.queryAndProcessResults(doiStops);
 
                     if (stopCancellationsClosed.isPresent() || stopCancellationsJourneyPatternDetour.isPresent()) {
                         publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(Arrays.asList(stopCancellationsClosed, stopCancellationsJourneyPatternDetour))));

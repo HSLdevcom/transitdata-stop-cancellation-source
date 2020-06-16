@@ -49,7 +49,7 @@ public class DisruptionJourneysStopsSource {
             return parseDisruptionJourneys(resultSet, stopsByGid);
         }
         catch (Exception e) {
-            log.error("Error while  querying and processing messages", e);
+            log.error("Error while querying and processing disruption routes", e);
             throw e;
         }
     }
@@ -59,12 +59,15 @@ public class DisruptionJourneysStopsSource {
         log.info("Processing disruptionJourneys resultset");
         while (resultSet.next()) {
             try {
+                String stopGid = resultSet.getString("AFFECTED_STOPS_GID");
+                String stopId = stopsByGid.containsKey(stopGid) ? stopsByGid.get(stopGid).stopId : "";
                 String tripId = resultSet.getString("DVJ_Id");
                 String operatingDay = resultSet.getString("OPERATING_DAY");
                 String routeName = resultSet.getString("ROUTE_NAME");
                 int direction = resultSet.getInt("DIRECTION");
                 String startTime = resultSet.getString("START_TIME");
                 String journeyPatternId = resultSet.getString("JP_Id");
+                disruptionJourneys.add(new DisruptionJourney(tripId, operatingDay, routeName, direction, startTime, journeyPatternId, stopId));
             } catch (IllegalArgumentException iae) {
                 log.error("Error while parsing the disruptionJourneys resultset", iae);
             }

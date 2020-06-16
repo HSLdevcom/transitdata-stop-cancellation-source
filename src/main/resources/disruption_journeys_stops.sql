@@ -1,10 +1,4 @@
 SELECT DISTINCT AD.deviation_case_id,
-	AD.default_compensation_factor,
-	AD.departure_id, /* this is linked to DVJ.Id */
-	AD.last_modified,
-	AD.last_modified_by,
-	AD.created,
-	AD.created_by,
 	ASTOPS.stop_id AS AFFECTED_STOPS_GID,
 	CONVERT(CHAR(16), DVJ.Id) AS DVJ_Id,
 	KVV.StringValue AS ROUTE_NAME,
@@ -29,7 +23,7 @@ SELECT DISTINCT AD.deviation_case_id,
 	WHERE (KT.Name = 'JoreIdentity' OR KT.Name = 'JoreRouteIdentity' OR KT.Name = 'RouteName')
 	AND OT.Name = 'VehicleJourney'
 	AND VJT.IsWorkedOnDirectionOfLineGid IS NOT NULL
-    --AND DVJ.OperatingDayDate >= 'VAR_FROM_DATE' TODO
-	--AND DVJ.OperatingDayDate <= 'VAR_TO_DATE' TODO
+    /* AND DVJ.OperatingDayDate >= 'VAR_FROM_DATE' TODO */
+	/* AND DVJ.OperatingDayDate <= 'VAR_TO_DATE' TODO */
 	AND DVJ.IsReplacedById IS NULL
 	AND ASTOPS.affected_stops_id IS NOT NULL;

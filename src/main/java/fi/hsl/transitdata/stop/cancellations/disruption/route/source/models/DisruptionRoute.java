@@ -112,7 +112,6 @@ public class DisruptionRoute {
     }
 
     public List <InternalMessages.JourneyPattern> getAffectedJourneyPatterns(Map<String, JourneyPattern> journeyPatternById) {
-        List <Journey> affectedJourneys = affectedJourneysByJourneyPatternId.values().stream().flatMap(List::stream).collect(Collectors.toList());
         return affectedJourneysByJourneyPatternId.keySet().stream().map(jpId -> {
             JourneyPattern affectedJourneyPattern = journeyPatternById.get(jpId).createNewWithSameStops();
             affectedJourneyPattern.addAffectedJourneys(affectedJourneysByJourneyPatternId.get(jpId));
