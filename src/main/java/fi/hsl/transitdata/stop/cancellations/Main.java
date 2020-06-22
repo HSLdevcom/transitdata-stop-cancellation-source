@@ -30,15 +30,21 @@ public class Main {
 
         try {
             final Config config = ConfigParser.createConfig();
+
             final String doiConnString = readConnString("FILEPATH_CONNECTION_STRING", "TRANSITDATA_PUBTRANS_CONN_STRING");
             final String ommConnString = readConnString("FILEPATH_CONNECTION_STRING_TEST", "TRANSITDATA_PUBTRANS_TEST_CONN_STRING");
+
+            final String doiDatabaseName = config.getString("doi.databaseName");
+            final String ommDatabaseName = config.getString("omm.databaseName");
+
             final int pollIntervalInSeconds = config.getInt("omm.interval");
+
             final PulsarApplication app = PulsarApplication.newInstance(config);
             final PulsarApplicationContext context = app.getContext();
 
-            final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, doiConnString);
+            final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, doiConnString, doiDatabaseName);
             final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, ommConnString, doiConnString);
-            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, ommConnString, doiConnString);
+            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, ommConnString, doiConnString, ommDatabaseName, doiDatabaseName);
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
             scheduler.scheduleAtFixedRate(() -> {

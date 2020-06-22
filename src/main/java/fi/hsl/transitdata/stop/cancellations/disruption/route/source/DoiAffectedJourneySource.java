@@ -19,17 +19,17 @@ public class DoiAffectedJourneySource {
     private final String timeZone;
     private final int queryFutureInDays;
 
-    private DoiAffectedJourneySource(PulsarApplicationContext context, Connection connection) {
+    private DoiAffectedJourneySource(PulsarApplicationContext context, Connection connection, String doiDatabaseName) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(),"/affected_journeys_by_disruption_routes.sql");
+        queryString = QueryUtils.createQuery(getClass(),"/affected_journeys_by_disruption_routes.sql").replaceAll("VAR_DOI_DATABASE_NAME", doiDatabaseName);
         timeZone = context.getConfig().getString("omm.timezone");
         queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
         log.info("Using {} future days in querying affected journeys", queryFutureInDays);
     }
 
-    public static DoiAffectedJourneySource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
+    public static DoiAffectedJourneySource newInstance(PulsarApplicationContext context, String jdbcConnectionString, String doiDatabaseName) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
-        return new DoiAffectedJourneySource(context, connection);
+        return new DoiAffectedJourneySource(context, connection, doiDatabaseName);
     }
 
     public List<Journey> getByDisruptionRoute(DisruptionRoute disruptionRoute) throws SQLException {
