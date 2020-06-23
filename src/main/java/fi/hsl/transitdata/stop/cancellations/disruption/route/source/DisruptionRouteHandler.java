@@ -22,10 +22,10 @@ public class DisruptionRouteHandler {
     final DoiAffectedJourneySource affectedJourneySource;
     final DoiAffectedJourneyPatternSource affectedJourneyPatternSource;
 
-    public DisruptionRouteHandler(PulsarApplicationContext context, String ommConnString, String doiConnString) throws SQLException {
-        disruptionRouteSource = OmmDisruptionRouteSource.newInstance(context, ommConnString);
-        affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString);
-        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
+    public DisruptionRouteHandler(PulsarApplicationContext context, String ommConnString, String doiConnString, String ommDatabaseName, String doiDatabaseName) throws SQLException {
+        disruptionRouteSource = OmmDisruptionRouteSource.newInstance(context, ommConnString, ommDatabaseName);
+        affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString, doiDatabaseName);
+        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString, doiDatabaseName);
     }
 
     public Optional<InternalMessages.StopCancellations> queryAndProcessResults (DoiStopInfoSource doiStops)  throws SQLException {

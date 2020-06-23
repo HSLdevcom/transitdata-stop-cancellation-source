@@ -15,9 +15,9 @@ SELECT DR.disruption_routes_id AS DISRUPTION_ROUTES_ID,
     B.valid_to AS B_VALID_TO,
     B.affected_route_ids AS AFFECTED_ROUTE_IDS,
     BLM.description AS DESCRIPTION
-    FROM omm_db.dbo.disruption_routes AS DR
-    LEFT JOIN omm_db.dbo.deviation_cases AS DC ON DC.deviation_case_id = DR.deviation_case_id
-    LEFT JOIN omm_db.dbo.bulletins AS B ON B.bulletins_id = DC.bulletin_id
+    FROM VAR_OMM_DATABASE_NAME.dbo.disruption_routes AS DR
+    LEFT JOIN VAR_OMM_DATABASE_NAME.dbo.deviation_cases AS DC ON DC.deviation_case_id = DR.deviation_case_id
+    LEFT JOIN VAR_OMM_DATABASE_NAME.dbo.bulletins AS B ON B.bulletins_id = DC.bulletin_id
     LEFT JOIN bulletin_localized_messages AS BLM ON DC.bulletin_id = BLM.bulletins_id
     WHERE (DC.valid_to >= 'VAR_DATE_FROM' OR DC.valid_to IS NULL)
     ORDER BY DR.last_modified DESC;

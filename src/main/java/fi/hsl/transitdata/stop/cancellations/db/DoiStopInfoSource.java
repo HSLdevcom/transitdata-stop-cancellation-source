@@ -18,16 +18,16 @@ public class DoiStopInfoSource {
     private final String timeZone;
     private final Map<String, Stop> stopMap;
 
-    private DoiStopInfoSource(PulsarApplicationContext context, Connection connection) throws SQLException {
+    private DoiStopInfoSource(PulsarApplicationContext context, Connection connection, String doiDatabaseName) throws SQLException {
         this.dbConnection = connection;
-        this.queryString = QueryUtils.createQuery(getClass() ,"/stop_info.sql");
+        this.queryString = QueryUtils.createQuery(getClass() ,"/stop_info.sql").replaceAll("VAR_DOI_DATABASE_NAME", doiDatabaseName);
         this.timeZone = context.getConfig().getString("omm.timezone");;
         this.stopMap = queryAndProcessResults();
     }
 
-    public static DoiStopInfoSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
+    public static DoiStopInfoSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, String doiDatabaseName) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
-        return new DoiStopInfoSource(context, connection);
+        return new DoiStopInfoSource(context, connection, doiDatabaseName);
     }
 
     public Map<String, Stop> getStopsByGidMap() {
