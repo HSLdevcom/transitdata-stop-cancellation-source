@@ -23,16 +23,16 @@ public class DoiAffectedJourneyPatternSource {
     private final String timeZone;
     private final int queryFutureInDays;
 
-    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection) {
+    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection, boolean useTestDoiQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(), "/affected_journey_patterns_by_stops.sql");
+        queryString = QueryUtils.createQuery(getClass(), useTestDoiQueries ? "/affected_journey_patterns_by_stops_test.sql" : "/affected_journey_patterns_by_stops.sql");
         timeZone = context.getConfig().getString("omm.timezone");
         queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
     }
 
-    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
+    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestDoiQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
-        return new DoiAffectedJourneyPatternSource(context, connection);
+        return new DoiAffectedJourneyPatternSource(context, connection, useTestDoiQueries);
     }
 
     public Map<String, JourneyPattern> queryByClosedStops(List<ClosedStop> closedStops) throws SQLException {

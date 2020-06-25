@@ -19,17 +19,17 @@ public class DoiAffectedJourneySource {
     private final String timeZone;
     private final int queryFutureInDays;
 
-    private DoiAffectedJourneySource(PulsarApplicationContext context, Connection connection) {
+    private DoiAffectedJourneySource(PulsarApplicationContext context, Connection connection, boolean useTestDoiQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(),"/affected_journeys_by_journey_patterns.sql");
+        queryString = QueryUtils.createQuery(getClass(),useTestDoiQueries ? "/affected_journeys_by_journey_patterns_test.sql" : "/affected_journeys_by_journey_patterns.sql");
         timeZone = context.getConfig().getString("omm.timezone");
         queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
         log.info("Using {} future days in querying affected journeys", queryFutureInDays);
     }
 
-    public static DoiAffectedJourneySource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
+    public static DoiAffectedJourneySource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestDoiQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
-        return new DoiAffectedJourneySource(context, connection);
+        return new DoiAffectedJourneySource(context, connection, useTestDoiQueries);
     }
 
     public Map<String, List<Journey>> queryByJourneyPatternIds(Collection<String> affectedJourneyPatternIds) throws SQLException {

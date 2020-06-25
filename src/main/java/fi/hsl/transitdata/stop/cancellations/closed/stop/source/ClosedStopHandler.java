@@ -20,10 +20,10 @@ public class ClosedStopHandler {
     final DoiAffectedJourneyPatternSource affectedJourneyPatternSource;
     final DoiAffectedJourneySource affectedJourneySource;
 
-    public ClosedStopHandler(PulsarApplicationContext context, String ommConnString, String doiConnString) throws SQLException {
+    public ClosedStopHandler(PulsarApplicationContext context, String ommConnString, String doiConnString, boolean useTestDoiQueries) throws SQLException {
         closedStopSource = OmmClosedStopSource.newInstance(context, ommConnString);
-        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
-        affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString);
+        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString, useTestDoiQueries);
+        affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString, useTestDoiQueries);
     }
 
     public Optional<InternalMessages.StopCancellations> queryAndProcessResults(DoiStopInfoSource doiStops) throws SQLException{
