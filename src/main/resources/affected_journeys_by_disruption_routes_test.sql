@@ -7,17 +7,17 @@ SELECT DISTINCT CONVERT(CHAR(16), DVJ.Id) AS DVJ_Id,
 		- ((DATEDIFF(HOUR, '1900-01-01', PlannedStartOffsetDateTime) * 60)))), 2) + ':00' AS START_TIME,
 	DVJ.OperatingDayDate + VJ.PlannedStartOffsetDateTime AS START_DATE_TIME,
 	JP.Id AS JP_Id
-    FROM ptDOI4_Community.dbo.DatedVehicleJourney AS DVJ
-    LEFT JOIN ptDOI4_Community.dbo.TimedJourneyPattern AS TJP ON TJP.Id = DVJ.UsesTimedJourneyPatternId
-    LEFT JOIN ptDOI4_Community.dbo.JourneyPattern AS JP ON JP.Id = TJP.IsBasedOnJourneyPatternId
-    LEFT JOIN ptDOI4_Community.dbo.VehicleJourney AS VJ ON (DVJ.IsBasedOnVehicleJourneyId = VJ.Id)
-    LEFT JOIN ptDOI4_Community.dbo.VehicleJourneyTemplate AS VJT ON (DVJ.IsBasedOnVehicleJourneyTemplateId = VJT.Id)
-    LEFT JOIN ptDOI4_Community.T.KeyVariantValue AS KVV ON (KVV.IsForObjectId = VJ.Id)
-    LEFT JOIN ptDOI4_Community.dbo.KeyVariantType AS KVT ON (KVT.Id = KVV.IsOfKeyVariantTypeId)
-    LEFT JOIN ptDOI4_Community.dbo.KeyType AS KT ON (KT.Id = KVT.IsForKeyTypeId)
-    LEFT JOIN ptDOI4_Community.dbo.ObjectType AS OT ON (KT.ExtendsObjectTypeNumber = OT.Number)
-    JOIN ptDOI4_Community.dbo.DirectionOfLine AS DL ON (DL.Gid = VJT.IsWorkedOnDirectionOfLineGid)
-    JOIN ptDOI4_Community.dbo.Line AS L ON (L.Id = DL.IsOnLineId)
+    FROM ptDOI4.dbo.doi4_DatedVehicleJourney AS DVJ
+    LEFT JOIN ptDOI4.dbo.doi4_TimedJourneyPattern AS TJP ON TJP.Id = DVJ.UsesTimedJourneyPatternId
+    LEFT JOIN ptDOI4.dbo.doi4_JourneyPattern AS JP ON JP.Id = TJP.IsBasedOnJourneyPatternId
+    LEFT JOIN ptDOI4.dbo.doi4_VehicleJourney AS VJ ON (DVJ.IsBasedOnVehicleJourneyId = VJ.Id)
+    LEFT JOIN ptDOI4.dbo.doi4_VehicleJourneyTemplate AS VJT ON (DVJ.IsBasedOnVehicleJourneyTemplateId = VJT.Id)
+    LEFT JOIN ptDOI4.dbo.doi4_T_KeyVariantValue AS KVV ON (KVV.IsForObjectId = VJ.Id)
+    LEFT JOIN ptDOI4.dbo.doi4_KeyVariantType AS KVT ON (KVT.Id = KVV.IsOfKeyVariantTypeId)
+    LEFT JOIN ptDOI4.dbo.doi4_KeyType AS KT ON (KT.Id = KVT.IsForKeyTypeId)
+    LEFT JOIN ptDOI4.dbo.doi4_ObjectType AS OT ON (KT.ExtendsObjectTypeNumber = OT.Number)
+    JOIN ptDOI4.dbo.doi4_DirectionOfLine AS DL ON (DL.Gid = VJT.IsWorkedOnDirectionOfLineGid)
+    JOIN ptDOI4.dbo.doi4_Line AS L ON (L.Id = DL.IsOnLineId)
     WHERE (KT.Name = 'JoreIdentity' OR KT.Name = 'JoreRouteIdentity' OR KT.Name = 'RouteName')
     AND L.Gid IN (VAR_AFFECTED_ROUTE_IDS)
     AND OT.Name = 'VehicleJourney'

@@ -7,27 +7,27 @@ SELECT JP.Id AS JP_Id,
     SP.Name AS SP_Name,
     SP.Gid AS SP_Gid,
     JPP.Number AS JPP_Number
-    FROM VAR_DOI_DATABASE_NAME.dbo.JourneyPattern AS JP
-    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.doi4_PointInJourneyPattern AS PIJP ON PIJP.IsInJourneyPatternId = JP.Id
-    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.StopPoint AS SP on SP.IsJourneyPatternPointGid = PIJP.IsJourneyPatternPointGid
-    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.JourneyPatternPoint AS JPP ON JPP.Gid = SP.IsJourneyPatternPointGid
+    FROM ptDOI4_Community.dbo.JourneyPattern AS JP
+    LEFT JOIN ptDOI4_Community.dbo.doi4_PointInJourneyPattern AS PIJP ON PIJP.IsInJourneyPatternId = JP.Id
+    LEFT JOIN ptDOI4_Community.dbo.StopPoint AS SP on SP.IsJourneyPatternPointGid = PIJP.IsJourneyPatternPointGid
+    LEFT JOIN ptDOI4_Community.dbo.JourneyPatternPoint AS JPP ON JPP.Gid = SP.IsJourneyPatternPointGid
     INNER JOIN (
         SELECT JP.Id
-            FROM VAR_DOI_DATABASE_NAME.dbo.JourneyPattern AS JP
-            LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.PointInJourneyPattern as PIJP ON PIJP.IsInJourneyPatternId = JP.Id
-            LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.JourneyPatternPoint AS JPP ON JPP.Gid = PIJP.IsJourneyPatternPointGid
-            LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.StopPoint AS SP ON SP.IsJourneyPatternPointGid = JPP.Gid
+            FROM ptDOI4_Community.dbo.JourneyPattern AS JP
+            LEFT JOIN ptDOI4_Community.dbo.PointInJourneyPattern as PIJP ON PIJP.IsInJourneyPatternId = JP.Id
+            LEFT JOIN ptDOI4_Community.dbo.JourneyPatternPoint AS JPP ON JPP.Gid = PIJP.IsJourneyPatternPointGid
+            LEFT JOIN ptDOI4_Community.dbo.StopPoint AS SP ON SP.IsJourneyPatternPointGid = JPP.Gid
             INNER JOIN (
                 SELECT DISTINCT(JP.Id)
-                    FROM VAR_DOI_DATABASE_NAME.dbo.DatedVehicleJourney AS DVJ
-                    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.TimedJourneyPattern AS TJP ON TJP.Id = DVJ.UsesTimedJourneyPatternId
-                    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.JourneyPattern AS JP ON JP.Id = TJP.IsBasedOnJourneyPatternId
-                    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.VehicleJourney AS VJ ON (DVJ.IsBasedOnVehicleJourneyId = VJ.Id)
-                    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.VehicleJourneyTemplate AS VJT ON (DVJ.IsBasedOnVehicleJourneyTemplateId = VJT.Id)
-                    LEFT JOIN VAR_DOI_DATABASE_NAME.T.KeyVariantValue AS KVV ON (KVV.IsForObjectId = VJ.Id)
-                    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.KeyVariantType AS KVT ON (KVT.Id = KVV.IsOfKeyVariantTypeId)
-                    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.KeyType AS KT ON (KT.Id = KVT.IsForKeyTypeId)
-                    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.ObjectType AS OT ON (KT.ExtendsObjectTypeNumber = OT.Number)
+                    FROM ptDOI4_Community.dbo.DatedVehicleJourney AS DVJ
+                    LEFT JOIN ptDOI4_Community.dbo.TimedJourneyPattern AS TJP ON TJP.Id = DVJ.UsesTimedJourneyPatternId
+                    LEFT JOIN ptDOI4_Community.dbo.JourneyPattern AS JP ON JP.Id = TJP.IsBasedOnJourneyPatternId
+                    LEFT JOIN ptDOI4_Community.dbo.VehicleJourney AS VJ ON (DVJ.IsBasedOnVehicleJourneyId = VJ.Id)
+                    LEFT JOIN ptDOI4_Community.dbo.VehicleJourneyTemplate AS VJT ON (DVJ.IsBasedOnVehicleJourneyTemplateId = VJT.Id)
+                    LEFT JOIN ptDOI4_Community.T.KeyVariantValue AS KVV ON (KVV.IsForObjectId = VJ.Id)
+                    LEFT JOIN ptDOI4_Community.dbo.KeyVariantType AS KVT ON (KVT.Id = KVV.IsOfKeyVariantTypeId)
+                    LEFT JOIN ptDOI4_Community.dbo.KeyType AS KT ON (KT.Id = KVT.IsForKeyTypeId)
+                    LEFT JOIN ptDOI4_Community.dbo.ObjectType AS OT ON (KT.ExtendsObjectTypeNumber = OT.Number)
                     WHERE (KT.Name = 'JoreIdentity' OR KT.Name = 'JoreRouteIdentity' OR KT.Name = 'RouteName' )
                     AND OT.Name = 'VehicleJourney'
                     AND VJT.IsWorkedOnDirectionOfLineGid IS NOT NULL
