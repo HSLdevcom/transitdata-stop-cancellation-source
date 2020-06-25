@@ -42,7 +42,7 @@ public class Main {
             final PulsarApplicationContext context = app.getContext();
 
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, connString, doiDatabaseName);
-            final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, connString, connString, ommDatabaseName, doiDatabaseName);
+            final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, connString, connString);
             final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, connString, connString, ommDatabaseName, doiDatabaseName);
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
