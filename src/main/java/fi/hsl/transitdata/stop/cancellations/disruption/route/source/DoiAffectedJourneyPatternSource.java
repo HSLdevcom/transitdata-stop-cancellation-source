@@ -20,15 +20,15 @@ public class DoiAffectedJourneyPatternSource {
     private final String queryString;
     private final String timeZone;
 
-    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection, String doiDatabaseName) {
+    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(), "/affected_journey_patterns_by_ids.sql").replaceAll("VAR_DOI_DATABASE_NAME", doiDatabaseName);
+        queryString = QueryUtils.createQuery(getClass(), "/affected_journey_patterns_by_ids.sql");
         timeZone = context.getConfig().getString("omm.timezone");
     }
 
-    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, String doiDatabaseName) throws SQLException {
+    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
-        return new DoiAffectedJourneyPatternSource(context, connection, doiDatabaseName);
+        return new DoiAffectedJourneyPatternSource(context, connection);
     }
 
     public Map<String, JourneyPattern> queryByJourneyPatternIds(List<String> journeyPatternIds) throws SQLException {

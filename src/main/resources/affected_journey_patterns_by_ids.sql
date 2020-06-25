@@ -7,10 +7,10 @@ SELECT JP.Id AS JP_Id,
     SP.Name AS SP_Name,
     SP.Gid AS SP_Gid,
     JPP.Number AS JPP_Number
-    FROM VAR_DOI_DATABASE_NAME.dbo.JourneyPattern AS JP
-    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.doi4_PointInJourneyPattern AS PIJP ON PIJP.IsInJourneyPatternId = JP.Id
-    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.StopPoint AS SP on SP.IsJourneyPatternPointGid = PIJP.IsJourneyPatternPointGid
-    LEFT JOIN VAR_DOI_DATABASE_NAME.dbo.JourneyPatternPoint AS JPP ON JPP.Gid = SP.IsJourneyPatternPointGid
+    FROM ptDOI4_Community.dbo.JourneyPattern AS JP
+    LEFT JOIN ptDOI4_Community.dbo.doi4_PointInJourneyPattern AS PIJP ON PIJP.IsInJourneyPatternId = JP.Id
+    LEFT JOIN ptDOI4_Community.dbo.StopPoint AS SP on SP.IsJourneyPatternPointGid = PIJP.IsJourneyPatternPointGid
+    LEFT JOIN ptDOI4_Community.dbo.JourneyPatternPoint AS JPP ON JPP.Gid = SP.IsJourneyPatternPointGid
     WHERE Jp.Id IN (VAR_JP_IDS)
     AND (SP.ExistsUptoDate >= 'VAR_DATE_NOW' OR SP.ExistsUptoDate IS NULL)
     AND (JPP.ExistsUptoDate >= 'VAR_DATE_NOW' OR JPP.ExistsUptoDate IS NULL)

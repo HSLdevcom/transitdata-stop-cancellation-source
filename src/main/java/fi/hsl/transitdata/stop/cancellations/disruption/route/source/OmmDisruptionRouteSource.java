@@ -20,16 +20,16 @@ public class OmmDisruptionRouteSource {
     private final String queryString;
     private final String timezone;
 
-    private OmmDisruptionRouteSource(Connection connection, String timezone, String ommDatabaseName) {
+    private OmmDisruptionRouteSource(Connection connection, String timezone) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass() ,"/disruption_routes.sql").replaceAll("VAR_OMM_DATABASE_NAME", ommDatabaseName);
+        queryString = QueryUtils.createQuery(getClass() ,"/disruption_routes.sql");
         this.timezone = timezone;
     }
 
-    public static OmmDisruptionRouteSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, String ommDatabaseName) throws SQLException {
+    public static OmmDisruptionRouteSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
         final String timezone = context.getConfig().getString("omm.timezone");
-        return new OmmDisruptionRouteSource(connection, timezone, ommDatabaseName);
+        return new OmmDisruptionRouteSource(connection, timezone);
     }
 
     public List<DisruptionRoute> queryAndProcessResults(Map<String, Stop> stopsByGid) throws SQLException {

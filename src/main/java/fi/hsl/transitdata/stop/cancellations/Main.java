@@ -33,17 +33,14 @@ public class Main {
 
             final String connString = readConnString("FILEPATH_CONNECTION_STRING", "TRANSITDATA_PUBTRANS_CAT_CONN_STRING");
 
-            final String doiDatabaseName = config.getString("doi.databaseName");
-            final String ommDatabaseName = config.getString("omm.databaseName");
-
             final int pollIntervalInSeconds = config.getInt("omm.interval");
-
             final PulsarApplication app = PulsarApplication.newInstance(config);
             final PulsarApplicationContext context = app.getContext();
 
-            final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, connString, doiDatabaseName);
+            final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, connString);
             final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, connString, connString);
-            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, connString, connString, ommDatabaseName, doiDatabaseName);
+            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, connString, connString);
+
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
             scheduler.scheduleAtFixedRate(() -> {
