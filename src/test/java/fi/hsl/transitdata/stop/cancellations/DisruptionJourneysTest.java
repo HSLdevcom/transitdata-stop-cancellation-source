@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -71,13 +72,28 @@ public class DisruptionJourneysTest {
         DisruptionJourney dj3 = new DisruptionJourney("7990504297881334","20180901", "1066K", 1, "24:48:00", "7990000038647169", "9022301111338001");
         DisruptionJourney dj4 = new DisruptionJourney("7990504297881334","20180901", "1066K", 1, "24:48:00", "7990000038647169", "9022301111357001");
         DisruptionJourney dj5 = new DisruptionJourney("7990504297881334","20180901", "1066K", 1, "24:48:00", "7990000038647169", "9022301111358001");
-        List<DisruptionJourney> disruptedJourneys = Arrays.asList(dj1, dj2, dj3, dj4, dj5);
+
+        DisruptionJourney dj6 = new DisruptionJourney("1","20180901", "1", 1, "24:48:00", "1", "9022301111358001");
+        DisruptionJourney dj7 = new DisruptionJourney("1","20180901", "1", 1, "24:48:00", "1", "9022301111358002");
+
+        List<DisruptionJourney> disruptedJourneys = Arrays.asList(dj1, dj2, dj3, dj4, dj5, dj6, dj7);
         when(mockJourneyStopDataSource.queryAndProcessResults(null)).thenReturn(disruptedJourneys);
 
-        JourneyPattern journeyPattern = new JourneyPattern("7990000038647169", 1);
+        JourneyPattern journeyPattern1 = new JourneyPattern("7990000038647169", 5);
+        journeyPattern1.addStop(new JourneyPatternStop("1", "9022301111335001", "Stop 1", 1));
+        journeyPattern1.addStop(new JourneyPatternStop("2", "9022301111337001", "Stop 2", 2));
+        journeyPattern1.addStop(new JourneyPatternStop("3", "9022301111338001", "Stop 3", 3));
+        journeyPattern1.addStop(new JourneyPatternStop("4", "9022301111357001", "Stop 4", 4));
+        journeyPattern1.addStop(new JourneyPatternStop("5", "9022301111358001", "Stop 5", 5));
+
+        JourneyPattern journeyPattern2 = new JourneyPattern("1", 2);
+        journeyPattern2.addStop(new JourneyPatternStop("1", "9022301111358001", "Stop 1", 1));
+        journeyPattern2.addStop(new JourneyPatternStop("2", "9022301111358002", "Stop 2", 2));
+
         Map<String, JourneyPattern> mapJourneyPattern = new HashMap<>();
-        mapJourneyPattern.put(journeyPattern.id, journeyPattern);
-        when(mockAffectedJourneyPatternDataSource.queryByJourneyPatternIds(Arrays.asList("7990000038647169"))).thenReturn(mapJourneyPattern);
+        mapJourneyPattern.put(journeyPattern1.id, journeyPattern1);
+        mapJourneyPattern.put(journeyPattern2.id, journeyPattern2);
+        when(mockAffectedJourneyPatternDataSource.queryByJourneyPatternIds(Arrays.asList("7990000038647169", "1"))).thenReturn(mapJourneyPattern);
     }
 
     @Test
@@ -85,9 +101,17 @@ public class DisruptionJourneysTest {
 
         DisruptionJourneyHandler journeyHandler = new DisruptionJourneyHandler(null, null);
 
-        Optional<InternalMessages.StopCancellations> stopCancellations = journeyHandler.queryAndProcessResults(mockDoiStopInfoSource);
-        assertEquals(stopCancellations.get().getStopCancellationsCount(), 5);
-        assertEquals(stopCancellations.get().getAffectedJourneyPatternsCount(), 1);
+        InternalMessages.StopCancellations stopCancellations = journeyHandler.queryAndProcessResults(mockDoiStopInfoSource).get();
+
+        assertEquals(7, stopCancellations.getStopCancellationsCount());
+        assertEquals(2, stopCancellations.getAffectedJourneyPatternsCount());
+
+        Map<String, InternalMessages.JourneyPattern> journeyPatterns = stopCancellations.getAffectedJourneyPatternsList().stream().collect(Collectors.toMap(InternalMessages.JourneyPattern::getJourneyPatternId, journey -> journey));
+
+        assertEquals(5, journeyPatterns.get("7990000038647169").getStopsCount());
+        assertEquals(2, journeyPatterns.get("1").getStopsCount());
     }
+
+
 
 }
