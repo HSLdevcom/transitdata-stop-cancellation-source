@@ -46,7 +46,6 @@ public class DisruptionRouteHandler {
         if (affectedJourneyPatternIds.size() == 0) return Optional.empty();
 
         Map<String, JourneyPattern> affectedJourneyPatternsById = affectedJourneyPatternSource.queryByJourneyPatternIds(affectedJourneyPatternIds);
-        affectedJourneyPatternsById.values().forEach(JourneyPattern::orderStopsBySequence);
 
         for (DisruptionRoute dr : disruptionRoutes) {
             dr.findAddAffectedStops(affectedJourneyPatternsById);
