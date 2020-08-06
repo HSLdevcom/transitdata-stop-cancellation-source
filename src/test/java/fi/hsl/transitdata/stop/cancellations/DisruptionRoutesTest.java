@@ -48,7 +48,6 @@ public class DisruptionRoutesTest {
         Map<String, JourneyPattern> jpById = new HashMap<>();
         jpById.put(jp1.id, jp1);
         jpById.put(jp2.id, jp2);
-        jpById.values().forEach(JourneyPattern::orderStopsBySequence);
 
         // create journeys
         Journey j1 = new Journey("A1", "2020-06-02", "A", 1, "07:36:00", "50");
