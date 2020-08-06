@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,11 @@ public class DoiAffectedJourneyPatternSource {
     }
 
     public Map<String, JourneyPattern> queryByJourneyPatternIds(List<String> journeyPatternIds) throws SQLException {
+        if (journeyPatternIds.isEmpty()) {
+            log.info("Journey pattern ID list is empty, not querying journey patterns from database");
+            return Collections.emptyMap();
+        }
+
         log.info("Querying journey patterns by disruption routes from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String queryJourneyPatternIds = String.join(",", journeyPatternIds);
