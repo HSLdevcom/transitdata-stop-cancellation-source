@@ -35,14 +35,15 @@ public class Main {
             final String connString = readConnString("FILEPATH_CONNECTION_STRING", "TRANSITDATA_PUBTRANS_CAT_CONN_STRING");
 
             final boolean useTestDoiQueries = config.getBoolean("doi.useTestDbQueries");
+            final boolean useTestOmmQueries = config.getBoolean("omm.useTestDbQueries");
 
             final int pollIntervalInSeconds = config.getInt("omm.interval");
             final PulsarApplication app = PulsarApplication.newInstance(config);
             final PulsarApplicationContext context = app.getContext();
 
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, connString, useTestDoiQueries);
-            final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, connString, connString, useTestDoiQueries);
-            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, connString, connString, useTestDoiQueries);
+            final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, connString, connString, useTestDoiQueries, useTestOmmQueries);
+            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, connString, connString, useTestDoiQueries, useTestOmmQueries);
 
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 

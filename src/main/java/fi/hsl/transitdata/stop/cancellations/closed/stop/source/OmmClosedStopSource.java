@@ -20,15 +20,15 @@ public class OmmClosedStopSource {
     private final String queryString;
     private final String timezone;
 
-    private OmmClosedStopSource(PulsarApplicationContext context, Connection connection) {
+    private OmmClosedStopSource(PulsarApplicationContext context, Connection connection, boolean useTestOmmQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass() ,"/closed_stops.sql");
+        queryString = QueryUtils.createQuery(getClass() , useTestOmmQueries ? "/closed_stops_test.sql" : "/closed_stops.sql");
         timezone = context.getConfig().getString("omm.timezone");
     }
 
-    public static OmmClosedStopSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
+    public static OmmClosedStopSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestOmmQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
-        return new OmmClosedStopSource(context, connection);
+        return new OmmClosedStopSource(context, connection, useTestOmmQueries);
     }
 
     public List<ClosedStop> queryAndProcessResults(Map<String, Stop> stopInfo) throws SQLException {

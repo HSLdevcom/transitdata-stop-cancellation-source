@@ -22,8 +22,8 @@ public class DisruptionRouteHandler {
     final DoiAffectedJourneySource affectedJourneySource;
     final DoiAffectedJourneyPatternSource affectedJourneyPatternSource;
 
-    public DisruptionRouteHandler(PulsarApplicationContext context, String ommConnString, String doiConnString, boolean useTestDoiQueries) throws SQLException {
-        disruptionRouteSource = OmmDisruptionRouteSource.newInstance(context, ommConnString);
+    public DisruptionRouteHandler(PulsarApplicationContext context, String ommConnString, String doiConnString, boolean useTestDoiQueries, boolean useTestOmmQueries) throws SQLException {
+        disruptionRouteSource = OmmDisruptionRouteSource.newInstance(context, ommConnString, useTestOmmQueries);
         affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString, useTestDoiQueries);
         affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString, useTestDoiQueries);
     }
