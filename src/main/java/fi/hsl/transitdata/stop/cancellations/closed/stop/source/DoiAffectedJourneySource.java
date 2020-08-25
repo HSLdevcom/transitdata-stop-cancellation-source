@@ -33,6 +33,11 @@ public class DoiAffectedJourneySource {
     }
 
     public Map<String, List<Journey>> queryByJourneyPatternIds(Collection<String> affectedJourneyPatternIds) throws SQLException {
+        if (affectedJourneyPatternIds.isEmpty()) {
+            log.info("Journey pattern ID list is empty, not querying journey patterns from database");
+            return Collections.emptyMap();
+        }
+
         log.info("Querying affected journeys from database");
         String dateFrom = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
