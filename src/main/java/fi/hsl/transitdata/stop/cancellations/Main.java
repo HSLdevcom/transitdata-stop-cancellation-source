@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class Main {
-
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
@@ -41,6 +40,7 @@ public class Main {
             final PulsarApplicationContext context = app.getContext();
 
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, connString, useTestDoiQueries);
+
             final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, connString, connString, useTestDoiQueries, useTestOmmQueries);
             final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, connString, connString, useTestDoiQueries, useTestOmmQueries);
 

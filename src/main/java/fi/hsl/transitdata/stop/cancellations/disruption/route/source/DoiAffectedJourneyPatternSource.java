@@ -9,10 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DoiAffectedJourneyPatternSource {
 
@@ -32,7 +29,7 @@ public class DoiAffectedJourneyPatternSource {
         return new DoiAffectedJourneyPatternSource(context, connection, useTestDoiQueries);
     }
 
-    public Map<String, JourneyPattern> queryByJourneyPatternIds(List<String> journeyPatternIds) throws SQLException {
+    public Map<String, JourneyPattern> queryByJourneyPatternIds(Collection<String> journeyPatternIds) throws SQLException {
         if (journeyPatternIds.isEmpty()) {
             log.info("Journey pattern ID list is empty, not querying journey patterns from database");
             return Collections.emptyMap();
@@ -48,8 +45,7 @@ public class DoiAffectedJourneyPatternSource {
         try (PreparedStatement statement = dbConnection.prepareStatement(preparedQueryString)) {
             ResultSet resultSet = statement.executeQuery();
             return parseAffectedJourneyPatterns(resultSet);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error while  querying and processing messages", e);
             throw e;
         }

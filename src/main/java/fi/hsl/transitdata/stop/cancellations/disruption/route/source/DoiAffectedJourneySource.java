@@ -37,7 +37,7 @@ public class DoiAffectedJourneySource {
         String dateFrom = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
         String preparedString = queryString
-                .replace("VAR_AFFECTED_ROUTE_IDS", disruptionRoute.affectedRoutes)
+                .replace("VAR_AFFECTED_ROUTE_IDS", String.join(",", disruptionRoute.affectedRoutes))
                 .replace("VAR_DATE_FROM", dateFrom)
                 .replace("VAR_DATE_TO", dateTo)
                 .replace("VAR_MIN_DEP_TIME", disruptionRoute.getValidFrom().orElse(dateFrom))
