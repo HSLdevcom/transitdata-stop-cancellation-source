@@ -19,11 +19,9 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Main {
-
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
@@ -42,6 +40,7 @@ public class Main {
             final PulsarApplicationContext context = app.getContext();
 
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, connString, useTestDoiQueries);
+
             final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, connString, connString, useTestDoiQueries, useTestOmmQueries);
             final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, connString, connString, useTestDoiQueries, useTestOmmQueries);
 
@@ -126,13 +125,13 @@ public class Main {
     }
 
     private static String readConnString(String envVar, String secretName) throws Exception {
+        //Default path is what works with Docker out-of-the-box. Override with a local file if needed
+        final String secretFilePath = ConfigUtils.getEnv(envVar)
+                .orElse("/run/secrets/" + secretName);
+
         String connectionString = "";
-        try {
-            //Default path is what works with Docker out-of-the-box. Override with a local file if needed
-            final String secretFilePath = ConfigUtils.getEnv(envVar)
-                                                     .orElse("/run/secrets/" + secretName);
-            connectionString = new Scanner(new File(secretFilePath))
-                    .useDelimiter("\\Z").next();
+        try (Scanner scanner = new Scanner(new File(secretFilePath)).useDelimiter("\\Z")) {
+            connectionString = scanner.next();
         } catch (Exception e) {
             log.error("Failed to read DB connection string from secrets", e);
             throw e;

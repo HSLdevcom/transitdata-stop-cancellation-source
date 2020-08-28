@@ -42,6 +42,11 @@ public class JourneyPattern {
     }
 
     public Optional<List<JourneyPatternStop>> getStopsBetweenTwoStops(String startStopId, String endStopId) {
+        //If the journey pattern does not contain either the start or end stop, return nothing
+        if (!stops.containsKey(startStopId) || !stops.containsKey(endStopId)) {
+            return Optional.empty();
+        }
+
         Set<String> stopIdsBetweenStops = stopIds.subSet(startStopId, false, endStopId, false);
         if (stopIdsBetweenStops.isEmpty()) {
             return Optional.empty();
