@@ -32,10 +32,14 @@ public class Main {
 
             final String connString = readConnString("FILEPATH_CONNECTION_STRING", "TRANSITDATA_PUBTRANS_CAT_CONN_STRING");
 
+            final boolean closedStopsEnabled = config.getBoolean("application.closedStopsEnabled");
+            final boolean disruptionRouteEnabled = config.getBoolean("application.disruptionRouteEnabled");
+
             final boolean useTestDoiQueries = config.getBoolean("doi.useTestDbQueries");
             final boolean useTestOmmQueries = config.getBoolean("omm.useTestDbQueries");
 
             final int pollIntervalInSeconds = config.getInt("omm.interval");
+
             final PulsarApplication app = PulsarApplication.newInstance(config);
             final PulsarApplicationContext context = app.getContext();
 
@@ -49,9 +53,14 @@ public class Main {
             scheduler.scheduleAtFixedRate(() -> {
                 try {
                     //Query closed stops, affected journey patterns and affected journeys
-                    final Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopHandler.queryAndProcessResults(doiStops);
+                    final Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopsEnabled ?
+                            closedStopHandler.queryAndProcessResults(doiStops) :
+                            Optional.empty();
+                    
                     //Query disruption routes and affected journeys
-                    final Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteHandler.queryAndProcessResults(doiStops);
+                    final Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteEnabled ?
+                            disruptionRouteHandler.queryAndProcessResults(doiStops) :
+                            Optional.empty();
 
                     //Stop cancellation message should be sent even if there are no cancellations so that cancellation-of-cancellation works in the processor
                     publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(Arrays.asList(stopCancellationsClosed, stopCancellationsJourneyPatternDetour))));
