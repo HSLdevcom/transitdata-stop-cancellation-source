@@ -11,10 +11,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -48,7 +45,6 @@ public class DisruptionRoutesTest {
         Map<String, JourneyPattern> jpById = new HashMap<>();
         jpById.put(jp1.id, jp1);
         jpById.put(jp2.id, jp2);
-        jpById.values().forEach(JourneyPattern::orderStopsBySequence);
 
         // create journeys
         Journey j1 = new Journey("A1", "2020-06-02", "A", 1, "07:36:00", "50");
@@ -57,17 +53,17 @@ public class DisruptionRoutesTest {
         Journey j4 = new Journey("A1", "2020-06-02", "A", 1, "07:36:00", "51");
 
         // create disruption routes -> list
-        DisruptionRoute dr1 = new DisruptionRoute("1", "21", "24", "4", "2020-06-01 09:40:00", "2020-06-10 09:40:00", "Europe/Helsinki");
-        DisruptionRoute dr2 = new DisruptionRoute("2", "26", "28", "4", "2020-06-01 09:40:00", "2020-06-10 09:40:00", "Europe/Helsinki");
-        DisruptionRoute dr3 = new DisruptionRoute("3", "31", "32", "4", "2020-06-01 09:40:00", "2020-06-10 09:40:00", "Europe/Helsinki");
+        DisruptionRoute dr1 = new DisruptionRoute("1", "21", "24", Collections.singleton("4"), "2020-06-01 09:40:00", "2020-06-10 09:40:00", "Europe/Helsinki");
+        DisruptionRoute dr2 = new DisruptionRoute("2", "26", "28", Collections.singleton("4"), "2020-06-01 09:40:00", "2020-06-10 09:40:00", "Europe/Helsinki");
+        DisruptionRoute dr3 = new DisruptionRoute("3", "31", "32", Collections.singleton("4"), "2020-06-01 09:40:00", "2020-06-10 09:40:00", "Europe/Helsinki");
 
         dr1.addAffectedJourneys(asList(j1, j2));
         dr2.addAffectedJourneys(asList(j1, j2));
         dr3.addAffectedJourneys(asList(j3, j4));
 
-        assertEquals(Collections.singletonList("50"), dr1.getAffectedJourneyPatternIds());
-        assertEquals(Collections.singletonList("50"), dr2.getAffectedJourneyPatternIds());
-        assertEquals(Collections.singletonList("51"), dr3.getAffectedJourneyPatternIds());
+        assertEquals(Collections.singleton("50"), dr1.getAffectedJourneyPatternIds());
+        assertEquals(Collections.singleton("50"), dr2.getAffectedJourneyPatternIds());
+        assertEquals(Collections.singleton("51"), dr3.getAffectedJourneyPatternIds());
 
         List<DisruptionRoute> drs = asList(dr1, dr2, dr3);
 
@@ -97,9 +93,9 @@ public class DisruptionRoutesTest {
         assertEquals(LocalDateTime.parse(dr2.getValidTo().get(), formatter), getLocalDateTimeFromUnix(scListDr2.get(0).getValidToUnixS()));
 
         // test that other attributes are in line between stop cancellations and disruption routes
-        assertEquals(dr1.getAffectedJourneyPatternIds(), scListDr1.get(0).getAffectedJourneyPatternIdsList());
-        assertEquals(dr1.getAffectedJourneyPatternIds(), scListDr1.get(1).getAffectedJourneyPatternIdsList());
-        assertEquals(dr2.getAffectedJourneyPatternIds(), scListDr2.get(0).getAffectedJourneyPatternIdsList());
+        assertEquals(dr1.getAffectedJourneyPatternIds(), new HashSet<>(scListDr1.get(0).getAffectedJourneyPatternIdsList()));
+        assertEquals(dr1.getAffectedJourneyPatternIds(), new HashSet<>(scListDr1.get(1).getAffectedJourneyPatternIdsList()));
+        assertEquals(dr2.getAffectedJourneyPatternIds(), new HashSet<>(scListDr2.get(0).getAffectedJourneyPatternIdsList()));
         assertEquals(InternalMessages.StopCancellations.Cause.JOURNEY_PATTERN_DETOUR, scListDr1.get(0).getCause());
         assertEquals(InternalMessages.StopCancellations.Cause.JOURNEY_PATTERN_DETOUR, scListDr1.get(1).getCause());
         assertEquals(InternalMessages.StopCancellations.Cause.JOURNEY_PATTERN_DETOUR, scListDr2.get(0).getCause());

@@ -30,7 +30,7 @@ public class ClosedStopsTest {
         journeyPattern2.addStop(new JourneyPatternStop("11", "21", "Rautatientori", 1));
         journeyPattern2.addStop(new JourneyPatternStop("12", "22", "Kurvi", 2));
         journeyPattern2.addStop(new JourneyPatternStop("13", "23", "Mäkelänrinne", 3));
-        journeyPattern2.addStop(new JourneyPatternStop("14", "24", "Käpylän asema", 3));
+        journeyPattern2.addStop(new JourneyPatternStop("14", "24", "Käpylän asema", 4));
 
         Map<String, JourneyPattern> affectedJourneyPatternMap = new HashMap<>();
         affectedJourneyPatternMap.put("50", journeyPattern1);
@@ -47,7 +47,7 @@ public class ClosedStopsTest {
 
         ClosedStopHandler.addAffectedJourneysToJourneyPatterns(affectedJourneyPatternMap, affectedJourneyMap);
         ClosedStopHandler.addAffectedJourneyPatternsToClosedStops(closedStops, affectedJourneyPatternMap);
-        Optional<InternalMessages.StopCancellations> message = ClosedStopHandler.createStopCancellationsMessage(closedStops, new ArrayList<>(affectedJourneyPatternMap.values()));
+        Optional<InternalMessages.StopCancellations> message = ClosedStopHandler.createStopCancellationsMessage(closedStops, affectedJourneyPatternMap.values());
 
         assertEquals(3, message.get().getStopCancellationsCount());
         assertEquals(1, message.get().getStopCancellations(0).getAffectedJourneyPatternIdsCount());

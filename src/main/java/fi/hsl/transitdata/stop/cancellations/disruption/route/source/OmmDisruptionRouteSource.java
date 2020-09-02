@@ -10,8 +10,10 @@ import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OmmDisruptionRouteSource {
 
@@ -20,16 +22,16 @@ public class OmmDisruptionRouteSource {
     private final String queryString;
     private final String timezone;
 
-    private OmmDisruptionRouteSource(Connection connection, String timezone) {
+    private OmmDisruptionRouteSource(Connection connection, String timezone, boolean useTestOmmQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass() ,"/disruption_routes.sql");
+        queryString = QueryUtils.createQuery(getClass() , useTestOmmQueries ? "/disruption_routes_test.sql" : "/disruption_routes.sql");
         this.timezone = timezone;
     }
 
-    public static OmmDisruptionRouteSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
+    public static OmmDisruptionRouteSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestOmmQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
         final String timezone = context.getConfig().getString("omm.timezone");
-        return new OmmDisruptionRouteSource(connection, timezone);
+        return new OmmDisruptionRouteSource(connection, timezone, useTestOmmQueries);
     }
 
     public List<DisruptionRoute> queryAndProcessResults(Map<String, Stop> stopsByGid) throws SQLException {
@@ -53,14 +55,20 @@ public class OmmDisruptionRouteSource {
         while (resultSet.next()) {
             try {
                 String disruptionRouteId = resultSet.getString("DISRUPTION_ROUTES_ID");
+
                 String startStopGid = resultSet.getString("START_STOP_ID");
                 String startStopId = stopsByGid.containsKey(startStopGid) ? stopsByGid.get(startStopGid).stopId : "";
                 String endStopGid = resultSet.getString("END_STOP_ID");
                 String endStopId = stopsByGid.containsKey(startStopGid) ? stopsByGid.get(endStopGid).stopId : "";
+
                 String affectedRoutes = resultSet.getString("AFFECTED_ROUTE_IDS");
+                List<String> affectedRoutesList = Arrays.stream(affectedRoutes.split(",")).map(String::trim).collect(Collectors.toList());
+
                 String validFrom = resultSet.getString("DC_VALID_FROM");
                 String validTo = resultSet.getString("DC_VALID_TO");
-                disruptionRoutes.add(new DisruptionRoute(disruptionRouteId, startStopId, endStopId, affectedRoutes, validFrom, validTo, timezone));
+
+                disruptionRoutes.add(new DisruptionRoute(disruptionRouteId, startStopId, endStopId, affectedRoutesList, validFrom, validTo, timezone));
+
                 String name = resultSet.getString("NAME");
                 String description = resultSet.getString("DESCRIPTION");
                 String type = resultSet.getString("DC_TYPE");
