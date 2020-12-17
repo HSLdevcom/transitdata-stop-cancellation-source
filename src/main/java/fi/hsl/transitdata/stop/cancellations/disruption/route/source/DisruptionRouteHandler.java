@@ -10,28 +10,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DisruptionRouteHandler {
-
     private static final Logger log = LoggerFactory.getLogger(DisruptionRouteHandler.class);
+
     final OmmDisruptionRouteSource disruptionRouteSource;
     final DoiAffectedJourneySource affectedJourneySource;
     final DoiAffectedJourneyPatternSource affectedJourneyPatternSource;
 
-    public DisruptionRouteHandler(PulsarApplicationContext context, String ommConnString, String doiConnString) throws SQLException {
-        disruptionRouteSource = OmmDisruptionRouteSource.newInstance(context, ommConnString);
-        affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString);
-        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
+    public DisruptionRouteHandler(PulsarApplicationContext context, String ommConnString, String doiConnString, boolean useTestDoiQueries, boolean useTestOmmQueries) throws SQLException {
+        disruptionRouteSource = OmmDisruptionRouteSource.newInstance(context, ommConnString, useTestOmmQueries);
+        affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString, useTestDoiQueries);
+        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString, useTestDoiQueries);
     }
 
-    public Optional<InternalMessages.StopCancellations> queryAndProcessResults (DoiStopInfoSource doiStops)  throws SQLException {
-        List<DisruptionRoute> disruptionRoutes = disruptionRouteSource.queryAndProcessResults(doiStops.getStopsByGidMap());
+    public Optional<InternalMessages.StopCancellations> queryAndProcessResults(DoiStopInfoSource doiStops)  throws SQLException {
+        List<DisruptionRoute> disruptionRoutes = disruptionRouteSource.queryAndProcessResults(doiStops.getDoiStopInfo());
 
-        if (disruptionRoutes.size() == 0) return Optional.empty();
+        if (disruptionRoutes.isEmpty()) {
+            return Optional.empty();
+        }
 
         for (DisruptionRoute disruptionRoute : disruptionRoutes) {
             List<Journey> affectedJourneys = affectedJourneySource.getByDisruptionRoute(disruptionRoute);
@@ -39,14 +39,16 @@ public class DisruptionRouteHandler {
         }
 
         // get unique journey pattern ids from affected journeys for querying affected journey patterns
-        List<String> affectedJourneyPatternIds = disruptionRoutes.stream().map(DisruptionRoute::getAffectedJourneyPatternIds)
-                .flatMap(List::stream)
-                .distinct().collect(Collectors.toList());
+        Set<String> affectedJourneyPatternIds = disruptionRoutes.stream()
+                .map(DisruptionRoute::getAffectedJourneyPatternIds)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
 
-        if (affectedJourneyPatternIds.size() == 0) return Optional.empty();
+        if (affectedJourneyPatternIds.isEmpty()) {
+            return Optional.empty();
+        }
 
         Map<String, JourneyPattern> affectedJourneyPatternsById = affectedJourneyPatternSource.queryByJourneyPatternIds(affectedJourneyPatternIds);
-        affectedJourneyPatternsById.values().forEach(JourneyPattern::orderStopsBySequence);
 
         for (DisruptionRoute dr : disruptionRoutes) {
             dr.findAddAffectedStops(affectedJourneyPatternsById);
@@ -58,15 +60,14 @@ public class DisruptionRouteHandler {
     }
 
     private InternalMessages.StopCancellations getStopCancellationsProtoBuf(List<DisruptionRoute> disruptionRoutes, Map<String, JourneyPattern> affectedJourneyPatternsById) {
-
         List<InternalMessages.StopCancellations.StopCancellation> stopCancellations = disruptionRoutes.stream()
                 .map(DisruptionRoute::getAsStopCancellations)
-                .flatMap(List::stream)
+                .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
         List<InternalMessages.JourneyPattern> affectedJourneyPatterns = disruptionRoutes.stream()
                 .map(dr -> dr.getAffectedJourneyPatterns(affectedJourneyPatternsById))
-                .flatMap(List::stream)
+                .flatMap(Collection::stream)
                 .collect(Collectors.toList());
 
         InternalMessages.StopCancellations.Builder builder = InternalMessages.StopCancellations.newBuilder();

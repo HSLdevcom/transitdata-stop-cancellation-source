@@ -14,20 +14,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ClosedStopHandler {
-
     private static final Logger log = LoggerFactory.getLogger(ClosedStopHandler.class);
+
     final OmmClosedStopSource closedStopSource;
     final DoiAffectedJourneyPatternSource affectedJourneyPatternSource;
     final DoiAffectedJourneySource affectedJourneySource;
 
-    public ClosedStopHandler(PulsarApplicationContext context, String ommConnString, String doiConnString) throws SQLException {
-        closedStopSource = OmmClosedStopSource.newInstance(context, ommConnString);
-        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString);
-        affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString);
+    public ClosedStopHandler(PulsarApplicationContext context, String ommConnString, String doiConnString, boolean useTestDoiQueries, boolean useTestOmmQueries) throws SQLException {
+        closedStopSource = OmmClosedStopSource.newInstance(context, ommConnString, useTestOmmQueries);
+        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString, useTestDoiQueries);
+        affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString, useTestDoiQueries);
     }
 
     public Optional<InternalMessages.StopCancellations> queryAndProcessResults(DoiStopInfoSource doiStops) throws SQLException{
-        List<ClosedStop> closedStops = closedStopSource.queryAndProcessResults(doiStops.getStopsByGidMap());
+        List<ClosedStop> closedStops = closedStopSource.queryAndProcessResults(doiStops.getDoiStopInfo());
+
         Map<String, JourneyPattern> affectedJourneyPatternById = affectedJourneyPatternSource.queryByClosedStops(closedStops);
         Map<String, List<Journey>> affectedJourneysByJourneyPatternId = affectedJourneySource.queryByJourneyPatternIds(affectedJourneyPatternById.keySet());
         addAffectedJourneysToJourneyPatterns(affectedJourneyPatternById, affectedJourneysByJourneyPatternId);

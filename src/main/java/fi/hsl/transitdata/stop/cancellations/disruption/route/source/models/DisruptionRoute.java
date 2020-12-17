@@ -14,20 +14,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class DisruptionRoute {
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final Logger log = LoggerFactory.getLogger(DisruptionRoute.class);
+
     public final String disruptionRouteId;
     public final String startStopId;
     public final String endStopId;
     private final Optional<LocalDateTime> validFromDate;
     private final Optional<LocalDateTime> validToDate;
     private final ZoneId timezoneId;
-    DateTimeFormatter formatter;
-    public final String affectedRoutes;
+    public final Collection<String> affectedRoutes;
     private final Map<String, List<Journey>> affectedJourneysByJourneyPatternId;
     private final Map<String, List<String>> affectedStopIdsByJourneyPatternId;
 
-    public DisruptionRoute(String disruptionRouteId, String startStopId, String endStopId, String affectedRoutes, String validFromDate, String validToDate, String timezone) {
+    public DisruptionRoute(String disruptionRouteId, String startStopId, String endStopId, Collection<String> affectedRoutes, String validFromDate, String validToDate, String timezone) {
         this.disruptionRouteId = disruptionRouteId;
         this.startStopId = startStopId;
         this.endStopId = endStopId;
@@ -37,7 +38,6 @@ public class DisruptionRoute {
         this.affectedRoutes = affectedRoutes;
         this.affectedJourneysByJourneyPatternId = new HashMap<>();
         this.affectedStopIdsByJourneyPatternId = new HashMap<>();
-        this.formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     }
 
     public void addAffectedJourneys(List<Journey> journeys) {
@@ -50,15 +50,15 @@ public class DisruptionRoute {
     }
 
     public Optional<String> getValidFrom() {
-        return this.validFromDate.map(localDateTime -> localDateTime.format(formatter));
+        return validFromDate.map(DATE_TIME_FORMATTER::format);
     }
 
     public Optional<String> getValidTo() {
-        return this.validToDate.map(localDateTime -> localDateTime.format(formatter));
+        return validToDate.map(DATE_TIME_FORMATTER::format);
     }
 
-    public List<String> getAffectedJourneyPatternIds() {
-        return new ArrayList<>(this.affectedJourneysByJourneyPatternId.keySet());
+    public Collection<String> getAffectedJourneyPatternIds() {
+        return affectedJourneysByJourneyPatternId.keySet();
     }
 
     public void findAddAffectedStops(Map<String, JourneyPattern> journeyPatternsById) {
@@ -79,40 +79,37 @@ public class DisruptionRoute {
 
     public List <InternalMessages.StopCancellations.StopCancellation> getAsStopCancellations() {
         // find unique cancelledStopIds from all affected stop ids
-        List<String> cancelledStopIds = affectedStopIdsByJourneyPatternId.values().stream()
-                .flatMap(List::stream)
-                .distinct()
-                .sorted()
-                .collect(Collectors.toList());
+        Set<String> cancelledStopIds = affectedStopIdsByJourneyPatternId.values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
 
-        if (cancelledStopIds.size() > 0)  {
-            validateStopCancellations(cancelledStopIds);
-            return cancelledStopIds.stream().map(stopId -> {
-                InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
-                builder.setCause(InternalMessages.StopCancellations.Cause.JOURNEY_PATTERN_DETOUR);
-                builder.setStopId(stopId);
-                validFromDate.ifPresent(dateTime -> builder.setValidFromUnixS(toUtcEpochSeconds(dateTime)));
-                validToDate.ifPresent(dateTime -> builder.setValidToUnixS(toUtcEpochSeconds(dateTime)));
-                builder.addAllAffectedJourneyPatternIds(new ArrayList<>(affectedStopIdsByJourneyPatternId.keySet()));
-                return builder.build();
-            }
-        ).collect(Collectors.toList());
-        } else  {
+        if (cancelledStopIds.isEmpty()) {
             log.info("No stop cancellations were created by disruption route {}", disruptionRouteId);
             return Collections.emptyList();
         }
+
+        validateStopCancellations(cancelledStopIds);
+        return cancelledStopIds.stream().map(stopId -> {
+            InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
+            builder.setCause(InternalMessages.StopCancellations.Cause.JOURNEY_PATTERN_DETOUR);
+            builder.setStopId(stopId);
+            validFromDate.ifPresent(dateTime -> builder.setValidFromUnixS(toUtcEpochSeconds(dateTime)));
+            validToDate.ifPresent(dateTime -> builder.setValidToUnixS(toUtcEpochSeconds(dateTime)));
+            builder.addAllAffectedJourneyPatternIds(new ArrayList<>(affectedStopIdsByJourneyPatternId.keySet()));
+            return builder.build();
+        }).collect(Collectors.toList());
     }
 
-    private void validateStopCancellations(List<String> cancelledStopIds) {
+    //TODO: what does this do?
+    private void validateStopCancellations(Set<String> cancelledStopIds) {
         // check that there's no journey pattern specific stop cancellations
-        List <String> compareStopIds =  affectedStopIdsByJourneyPatternId.values().iterator().next().stream().sorted().collect(Collectors.toList());
+        Set<String> compareStopIds = new HashSet<>(affectedStopIdsByJourneyPatternId.values().iterator().next());
         if (!cancelledStopIds.equals(compareStopIds)) {
             log.warn("Found journey pattern specific stop cancellations by disruption route");
         }
     }
 
     public List <InternalMessages.JourneyPattern> getAffectedJourneyPatterns(Map<String, JourneyPattern> journeyPatternById) {
-        List <Journey> affectedJourneys = affectedJourneysByJourneyPatternId.values().stream().flatMap(List::stream).collect(Collectors.toList());
         return affectedJourneysByJourneyPatternId.keySet().stream().map(jpId -> {
             JourneyPattern affectedJourneyPattern = journeyPatternById.get(jpId).createNewWithSameStops();
             affectedJourneyPattern.addAffectedJourneys(affectedJourneysByJourneyPatternId.get(jpId));

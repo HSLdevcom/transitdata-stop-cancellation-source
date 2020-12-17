@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,19 +24,24 @@ public class DoiAffectedJourneyPatternSource {
     private final String timeZone;
     private final int queryFutureInDays;
 
-    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection) {
+    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection, boolean useTestDoiQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(), "/affected_journey_patterns_by_stops.sql");
+        queryString = QueryUtils.createQuery(getClass(), useTestDoiQueries ? "/affected_journey_patterns_by_stops_test.sql" : "/affected_journey_patterns_by_stops.sql");
         timeZone = context.getConfig().getString("omm.timezone");
         queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
     }
 
-    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString) throws SQLException {
+    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestDoiQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
-        return new DoiAffectedJourneyPatternSource(context, connection);
+        return new DoiAffectedJourneyPatternSource(context, connection, useTestDoiQueries);
     }
 
     public Map<String, JourneyPattern> queryByClosedStops(List<ClosedStop> closedStops) throws SQLException {
+        if (closedStops.isEmpty()) {
+            log.info("Closed stops list is empty, not querying journey patterns from database");
+            return Collections.emptyMap();
+        }
+
         log.info("Querying affected journey patterns from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
