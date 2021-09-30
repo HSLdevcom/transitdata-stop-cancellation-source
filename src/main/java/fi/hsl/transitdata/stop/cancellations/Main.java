@@ -27,6 +27,8 @@ public class Main {
     public static void main(String[] args) {
         final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
+        PulsarApplication app = null;
+
         try {
             final Config config = ConfigParser.createConfig();
 
@@ -40,7 +42,7 @@ public class Main {
 
             final int pollIntervalInSeconds = config.getInt("omm.interval");
 
-            final PulsarApplication app = PulsarApplication.newInstance(config);
+            app = PulsarApplication.newInstance(config);
             final PulsarApplicationContext context = app.getContext();
 
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, connString, useTestDoiQueries);
@@ -77,6 +79,7 @@ public class Main {
             }, 0, pollIntervalInSeconds, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("Exception at Main: " + e.getMessage(), e);
+            closeApplication(app, scheduler);
         }
     }
 
