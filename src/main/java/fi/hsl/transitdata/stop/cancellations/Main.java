@@ -52,6 +52,7 @@ public class Main {
 
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
+            PulsarApplication finalApp = app;
             scheduler.scheduleAtFixedRate(() -> {
                 try {
                     //Query closed stops, affected journey patterns and affected journeys
@@ -68,13 +69,13 @@ public class Main {
                     publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(Arrays.asList(stopCancellationsClosed, stopCancellationsJourneyPatternDetour))));
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);
-                    closeApplication(app, scheduler);
+                    closeApplication(finalApp, scheduler);
                 } catch (SQLException e) {
                     log.error("SQL exception", e);
-                    closeApplication(app, scheduler);
+                    closeApplication(finalApp, scheduler);
                 } catch (Exception e) {
                     log.error("Unknown exception at poll cycle: ", e);
-                    closeApplication(app, scheduler);
+                    closeApplication(finalApp, scheduler);
                 }
             }, 0, pollIntervalInSeconds, TimeUnit.SECONDS);
         } catch (Exception e) {
