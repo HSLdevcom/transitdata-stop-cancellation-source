@@ -32,7 +32,11 @@ public class Main {
         try {
             final Config config = ConfigParser.createConfig();
 
-            final String connString = readConnString("FILEPATH_CONNECTION_STRING", "TRANSITDATA_PUBTRANS_CAT_CONN_STRING");
+            final String connString = System.getenv("TRANSITDATA_PUBTRANS_CAT_CONN_STRING");
+
+            if (connString.isEmpty()) {
+                throw new Exception("Failed to find DB connection string, exiting application");
+            }
 
             final boolean closedStopsEnabled = config.getBoolean("application.closedStopsEnabled");
             final boolean disruptionRouteEnabled = config.getBoolean("application.disruptionRouteEnabled");
