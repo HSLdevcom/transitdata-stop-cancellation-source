@@ -73,8 +73,8 @@ public class OmmDisruptionRouteSource {
                 String description = resultSet.getString("DESCRIPTION");
                 String type = resultSet.getString("DC_TYPE");
                 log.info("Found disruption route with name: {}, description: {} and type: {}", name, description, type);
-            } catch (IllegalArgumentException iae) {
-                log.error("Error while parsing the disruptionRoutes resultset", iae);
+            } catch (IllegalArgumentException|NullPointerException e) {
+                log.error("Error while parsing the disruptionRoutes resultset", e);
             }
         }
         log.info("Found total {} disruption routes", disruptionRoutes.size());
