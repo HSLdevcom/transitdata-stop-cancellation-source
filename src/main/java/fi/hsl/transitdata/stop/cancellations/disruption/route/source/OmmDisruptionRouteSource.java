@@ -24,7 +24,7 @@ public class OmmDisruptionRouteSource {
 
     private OmmDisruptionRouteSource(Connection connection, String timezone, boolean useTestOmmQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass() , useTestOmmQueries ? "/disruption_routes_test.sql" : "/disruption_routes.sql");
+        queryString = QueryUtils.createQuery(getClass(), useTestOmmQueries ? "/disruption_routes_test.sql" : "/disruption_routes.sql");
         this.timezone = timezone;
     }
 
@@ -42,8 +42,7 @@ public class OmmDisruptionRouteSource {
         try (PreparedStatement statement = dbConnection.prepareStatement(preparedString)) {
             ResultSet resultSet = statement.executeQuery();
             return parseDisruptionRoutes(resultSet, stopsByGid);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error while  querying and processing messages", e);
             throw e;
         }
@@ -73,7 +72,7 @@ public class OmmDisruptionRouteSource {
                 String description = resultSet.getString("DESCRIPTION");
                 String type = resultSet.getString("DC_TYPE");
                 log.info("Found disruption route with name: {}, description: {} and type: {}", name, description, type);
-            } catch (IllegalArgumentException|NullPointerException e) {
+            } catch (IllegalArgumentException | NullPointerException e) {
                 log.error("Error while parsing the disruptionRoutes resultset", e);
             }
         }
