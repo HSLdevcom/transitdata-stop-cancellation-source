@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class StopCancellationPublisher {
 
@@ -28,7 +31,12 @@ public class StopCancellationPublisher {
     }
 
     private void sendStopCancellations(InternalMessages.StopCancellations message, long timestamp) throws PulsarClientException {
-        log.info("Sending {} stop cancellations with {} affected journey patterns", message.getStopCancellationsCount(), message.getAffectedJourneyPatternsCount());
+        List<String> stopIds = new ArrayList<>();
+        if (message.getStopCancellationsList() != null) {
+            stopIds = message.getStopCancellationsList().stream().map(x -> x.getStopId()).collect(Collectors.toList());
+        }
+        log.info("Sending {} stop cancellations with {} affected journey patterns. Stop ids: {}",
+                message.getStopCancellationsCount(), message.getAffectedJourneyPatternsCount(), stopIds);
         try {
             producer.newMessage().value(message.toByteArray())
                     .eventTime(timestamp)
