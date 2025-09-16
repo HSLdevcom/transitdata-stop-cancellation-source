@@ -11,7 +11,8 @@ public class JourneyPattern {
     private final int stopCount;
     private final Map<String, JourneyPatternStop> stops = new HashMap<>();
     //Stop IDs sorted by stop sequence
-    private final NavigableSet<String> stopIds = new TreeSet<>(Comparator.comparingInt(stopId -> stops.get(stopId).getSequence()));
+    private final NavigableSet<String> stopIds = new TreeSet<>(
+            Comparator.comparingInt(stopId -> stops.get(stopId).getSequence()));
     private final List<Journey> journeys = new ArrayList<>();
 
     public JourneyPattern(String id, int stopCount) {
@@ -19,7 +20,7 @@ public class JourneyPattern {
         this.stopCount = stopCount;
     }
 
-    public Collection<String> getStopIds(){
+    public Collection<String> getStopIds() {
         return stops.keySet();
     }
 
@@ -58,7 +59,8 @@ public class JourneyPattern {
     public InternalMessages.JourneyPattern getAsProtoBuf() {
         InternalMessages.JourneyPattern.Builder builder = InternalMessages.JourneyPattern.newBuilder();
         builder.setJourneyPatternId(id);
-        builder.addAllStops(stopIds.stream().map(stops::get).map(JourneyPatternStop::getAsProtoBuf).collect(Collectors.toList()));
+        builder.addAllStops(
+                stopIds.stream().map(stops::get).map(JourneyPatternStop::getAsProtoBuf).collect(Collectors.toList()));
         if (!journeys.isEmpty()) {
             builder.addAllTrips(journeys.stream().map(Journey::getAsProtoBuf).collect(Collectors.toList()));
         }

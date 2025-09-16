@@ -22,11 +22,13 @@ public class OmmClosedStopSource {
 
     private OmmClosedStopSource(PulsarApplicationContext context, Connection connection, boolean useTestOmmQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass() , useTestOmmQueries ? "/closed_stops_test.sql" : "/closed_stops.sql");
+        queryString = QueryUtils.createQuery(getClass(),
+                useTestOmmQueries ? "/closed_stops_test.sql" : "/closed_stops.sql");
         timezone = context.getConfig().getString("omm.timezone");
     }
 
-    public static OmmClosedStopSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestOmmQueries) throws SQLException {
+    public static OmmClosedStopSource newInstance(PulsarApplicationContext context, String jdbcConnectionString,
+            boolean useTestOmmQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
         return new OmmClosedStopSource(context, connection, useTestOmmQueries);
     }
@@ -38,8 +40,7 @@ public class OmmClosedStopSource {
             statement.setString(1, dateNow);
             ResultSet resultSet = statement.executeQuery();
             return parseClosedStops(resultSet, stopInfo);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error while  querying and processing messages", e);
             throw e;
         }
@@ -59,8 +60,10 @@ public class OmmClosedStopSource {
                     String existsFromDate = resultSet.getString("SD_VALID_FROM");
                     String existsUpToDate = resultSet.getString("SD_VALID_TO");
                     String description = resultSet.getString("B_DESCRIPTION");
-                    closedStops.add(new ClosedStop(stopId, stopGid, stopName, stopDeviationsId, description, existsFromDate, existsUpToDate, timezone));
-                    log.info("Found closed stop {} ({}) with info: {} - stopDeviationsId: {}", stopName, stopId, description, stopDeviationsId);
+                    closedStops.add(new ClosedStop(stopId, stopGid, stopName, stopDeviationsId, description,
+                            existsFromDate, existsUpToDate, timezone));
+                    log.info("Found closed stop {} ({}) with info: {} - stopDeviationsId: {}", stopName, stopId,
+                            description, stopDeviationsId);
                 } else {
                     log.error("Could not find stop info for closed stop (gid: {})", stopGid);
                 }

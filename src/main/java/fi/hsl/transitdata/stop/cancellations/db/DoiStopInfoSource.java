@@ -23,13 +23,16 @@ public class DoiStopInfoSource {
     private Map<String, Stop> stopsMap;
     private Instant stopsUpdateTime;
 
-    private DoiStopInfoSource(PulsarApplicationContext context, Connection connection, boolean useTestDoiQueries) throws SQLException {
+    private DoiStopInfoSource(PulsarApplicationContext context, Connection connection, boolean useTestDoiQueries)
+            throws SQLException {
         this.dbConnection = connection;
-        this.queryString = QueryUtils.createQuery(getClass(), useTestDoiQueries ? "/stop_info_test.sql" : "/stop_info.sql");
+        this.queryString = QueryUtils.createQuery(getClass(),
+                useTestDoiQueries ? "/stop_info_test.sql" : "/stop_info.sql");
         this.timeZone = context.getConfig().getString("omm.timezone");
     }
 
-    public static DoiStopInfoSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestDoiQueries) throws SQLException {
+    public static DoiStopInfoSource newInstance(PulsarApplicationContext context, String jdbcConnectionString,
+            boolean useTestDoiQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
         return new DoiStopInfoSource(context, connection, useTestDoiQueries);
     }
@@ -45,7 +48,8 @@ public class DoiStopInfoSource {
             log.info("Querying stop info from database");
             String dateNow = QueryUtils.localDateAsString(currentTime, timeZone);
 
-            try (PreparedStatement statement = dbConnection.prepareStatement(queryString.replaceAll("VAR_DATE_NOW", dateNow))) {
+            try (PreparedStatement statement = dbConnection
+                    .prepareStatement(queryString.replaceAll("VAR_DATE_NOW", dateNow))) {
                 ResultSet resultSet = statement.executeQuery();
 
                 stopsMap = parseStops(resultSet);

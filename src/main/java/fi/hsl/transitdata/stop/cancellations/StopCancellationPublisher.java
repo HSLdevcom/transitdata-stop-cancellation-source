@@ -30,7 +30,8 @@ public class StopCancellationPublisher {
         sendStopCancellations(message, currentTimestampUtcMs);
     }
 
-    private void sendStopCancellations(InternalMessages.StopCancellations message, long timestamp) throws PulsarClientException {
+    private void sendStopCancellations(InternalMessages.StopCancellations message, long timestamp)
+            throws PulsarClientException {
         List<String> stopIds = new ArrayList<>();
         if (message.getStopCancellationsList() != null) {
             stopIds = message.getStopCancellationsList().stream().map(x -> x.getStopId()).collect(Collectors.toList());
@@ -38,16 +39,14 @@ public class StopCancellationPublisher {
         log.info("Sending {} stop cancellations with {} affected journey patterns. Stop ids: {}",
                 message.getStopCancellationsCount(), message.getAffectedJourneyPatternsCount(), stopIds);
         try {
-            producer.newMessage().value(message.toByteArray())
-                    .eventTime(timestamp)
-                    .property(TransitdataProperties.KEY_PROTOBUF_SCHEMA, TransitdataProperties.ProtobufSchema.StopCancellations.toString())
+            producer.newMessage().value(message.toByteArray()).eventTime(timestamp)
+                    .property(TransitdataProperties.KEY_PROTOBUF_SCHEMA,
+                            TransitdataProperties.ProtobufSchema.StopCancellations.toString())
                     .send();
-        }
-        catch (PulsarClientException pe) {
+        } catch (PulsarClientException pe) {
             log.error("Failed to send stop cancellation message to Pulsar", pe);
             throw pe;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Failed to handle handle stop cancellation message", e);
         }
     }

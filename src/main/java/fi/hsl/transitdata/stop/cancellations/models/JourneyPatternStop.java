@@ -9,7 +9,7 @@ public class JourneyPatternStop {
     private final Integer sequence;
     private final String name;
 
-    public JourneyPatternStop(String stopGid, String stopId, String name, Integer sequence)  {
+    public JourneyPatternStop(String stopGid, String stopId, String name, Integer sequence) {
         this.stopGid = stopGid;
         this.stopId = stopId;
         this.name = name;

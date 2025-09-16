@@ -28,13 +28,14 @@ public class DisruptionRoute {
     private final Map<String, List<Journey>> affectedJourneysByJourneyPatternId;
     private final Map<String, List<String>> affectedStopIdsByJourneyPatternId;
 
-    public DisruptionRoute(String disruptionRouteId, String startStopId, String endStopId, Collection<String> affectedRoutes, String validFromDate, String validToDate, String timezone) {
+    public DisruptionRoute(String disruptionRouteId, String startStopId, String endStopId,
+            Collection<String> affectedRoutes, String validFromDate, String validToDate, String timezone) {
         this.disruptionRouteId = disruptionRouteId;
         this.startStopId = startStopId;
         this.endStopId = endStopId;
         this.validFromDate = getDateOrEmpty(validFromDate);
         this.validToDate = getDateOrEmpty(validToDate);
-        this.timezoneId =  ZoneId.of(timezone);
+        this.timezoneId = ZoneId.of(timezone);
         this.affectedRoutes = affectedRoutes;
         this.affectedJourneysByJourneyPatternId = new HashMap<>();
         this.affectedStopIdsByJourneyPatternId = new HashMap<>();
@@ -64,8 +65,10 @@ public class DisruptionRoute {
     public void findAddAffectedStops(Map<String, JourneyPattern> journeyPatternsById) {
         for (String jpId : affectedJourneysByJourneyPatternId.keySet()) {
             JourneyPattern journeyPattern = journeyPatternsById.get(jpId);
-            Optional<List<JourneyPatternStop>> stopsBetween = journeyPattern.getStopsBetweenTwoStops(startStopId, endStopId);
-            stopsBetween.ifPresent(stops -> affectedStopIdsByJourneyPatternId.put(jpId, stops.stream().map(stop -> stop.stopId).collect(Collectors.toList())));
+            Optional<List<JourneyPatternStop>> stopsBetween = journeyPattern.getStopsBetweenTwoStops(startStopId,
+                    endStopId);
+            stopsBetween.ifPresent(stops -> affectedStopIdsByJourneyPatternId.put(jpId,
+                    stops.stream().map(stop -> stop.stopId).collect(Collectors.toList())));
         }
     }
 
@@ -77,10 +80,9 @@ public class DisruptionRoute {
         }
     }
 
-    public List <InternalMessages.StopCancellations.StopCancellation> getAsStopCancellations() {
+    public List<InternalMessages.StopCancellations.StopCancellation> getAsStopCancellations() {
         // find unique cancelledStopIds from all affected stop ids
-        Set<String> cancelledStopIds = affectedStopIdsByJourneyPatternId.values().stream()
-                .flatMap(Collection::stream)
+        Set<String> cancelledStopIds = affectedStopIdsByJourneyPatternId.values().stream().flatMap(Collection::stream)
                 .collect(Collectors.toSet());
 
         if (cancelledStopIds.isEmpty()) {
@@ -90,7 +92,8 @@ public class DisruptionRoute {
 
         validateStopCancellations(cancelledStopIds);
         return cancelledStopIds.stream().map(stopId -> {
-            InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
+            InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation
+                    .newBuilder();
             builder.setCause(InternalMessages.StopCancellations.Cause.JOURNEY_PATTERN_DETOUR);
             builder.setStopId(stopId);
             validFromDate.ifPresent(dateTime -> builder.setValidFromUnixS(toUtcEpochSeconds(dateTime)));
@@ -109,7 +112,8 @@ public class DisruptionRoute {
         }
     }
 
-    public List <InternalMessages.JourneyPattern> getAffectedJourneyPatterns(Map<String, JourneyPattern> journeyPatternById) {
+    public List<InternalMessages.JourneyPattern> getAffectedJourneyPatterns(
+            Map<String, JourneyPattern> journeyPatternById) {
         return affectedJourneysByJourneyPatternId.keySet().stream().map(jpId -> {
             JourneyPattern affectedJourneyPattern = journeyPatternById.get(jpId).createNewWithSameStops();
             affectedJourneyPattern.addAffectedJourneys(affectedJourneysByJourneyPatternId.get(jpId));

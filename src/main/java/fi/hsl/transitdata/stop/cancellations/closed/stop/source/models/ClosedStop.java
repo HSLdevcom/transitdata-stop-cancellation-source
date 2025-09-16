@@ -20,7 +20,8 @@ public class ClosedStop {
     private final String timezone;
     private final List<String> affectedJourneyPatternIds;
 
-    public ClosedStop(String stopId, String stopGid, String stopName, long stopDeviationsId, String description, String existsFromDate, String existsUpToDate, String timezone) {
+    public ClosedStop(String stopId, String stopGid, String stopName, long stopDeviationsId, String description,
+            String existsFromDate, String existsUpToDate, String timezone) {
         this.stopId = stopId;
         this.stopGid = stopGid;
         this.stopName = stopName;
@@ -53,7 +54,8 @@ public class ClosedStop {
     }
 
     public InternalMessages.StopCancellations.StopCancellation getAsProtoBuf() {
-        InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation.newBuilder();
+        InternalMessages.StopCancellations.StopCancellation.Builder builder = InternalMessages.StopCancellations.StopCancellation
+                .newBuilder();
         builder.setCause(InternalMessages.StopCancellations.Cause.CLOSED_STOP);
         builder.setStopId(stopId);
         existsFromDate.ifPresent(localDateTime -> builder.setValidFromUnixS(toUtcEpochSeconds(localDateTime)));

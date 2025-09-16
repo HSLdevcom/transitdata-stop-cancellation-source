@@ -17,9 +17,12 @@ public class ClosedStopsTest {
     @Test
     public void testClosedStopsMapping() {
         List<ClosedStop> closedStops = new ArrayList<>();
-        closedStops.add(new ClosedStop("11", "4", "Valimo", 1, "peruttu", "2020-01-04", "2020-07-01", "Europe/Helsinki"));
-        closedStops.add(new ClosedStop("12", "5", "Huopalahti", 2, "peruttu", "2020-01-04", "2020-07-01", "Europe/Helsinki"));
-        closedStops.add(new ClosedStop("21", "6", "Rautatientori", 3, "peruttu", "2020-01-04", "2020-07-01", "Europe/Helsinki"));
+        closedStops
+                .add(new ClosedStop("11", "4", "Valimo", 1, "peruttu", "2020-01-04", "2020-07-01", "Europe/Helsinki"));
+        closedStops.add(
+                new ClosedStop("12", "5", "Huopalahti", 2, "peruttu", "2020-01-04", "2020-07-01", "Europe/Helsinki"));
+        closedStops.add(new ClosedStop("21", "6", "Rautatientori", 3, "peruttu", "2020-01-04", "2020-07-01",
+                "Europe/Helsinki"));
 
         JourneyPattern journeyPattern1 = new JourneyPattern("50", 3);
         journeyPattern1.addStop(new JourneyPatternStop("1", "11", "Valimo", 1));
@@ -36,7 +39,7 @@ public class ClosedStopsTest {
         affectedJourneyPatternMap.put("50", journeyPattern1);
         affectedJourneyPatternMap.put("51", journeyPattern2);
 
-        Map <String, List<Journey>> affectedJourneyMap = new HashMap<>();
+        Map<String, List<Journey>> affectedJourneyMap = new HashMap<>();
         affectedJourneyMap.put("50", new ArrayList<>());
         affectedJourneyMap.get("50").add(new Journey("A1", "2020-04-21", "A", 1, "07:36:00", "50"));
         affectedJourneyMap.get("50").add(new Journey("A2", "2020-04-21", "A", 1, "07:50:00", "50"));
@@ -47,7 +50,8 @@ public class ClosedStopsTest {
 
         ClosedStopHandler.addAffectedJourneysToJourneyPatterns(affectedJourneyPatternMap, affectedJourneyMap);
         ClosedStopHandler.addAffectedJourneyPatternsToClosedStops(closedStops, affectedJourneyPatternMap);
-        Optional<InternalMessages.StopCancellations> message = ClosedStopHandler.createStopCancellationsMessage(closedStops, affectedJourneyPatternMap.values());
+        Optional<InternalMessages.StopCancellations> message = ClosedStopHandler
+                .createStopCancellationsMessage(closedStops, affectedJourneyPatternMap.values());
 
         assertEquals(3, message.get().getStopCancellationsCount());
         assertEquals(1, message.get().getStopCancellations(0).getAffectedJourneyPatternIdsCount());

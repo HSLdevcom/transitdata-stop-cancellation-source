@@ -24,14 +24,19 @@ public class DoiAffectedJourneyPatternSource {
     private final String timeZone;
     private final int queryFutureInDays;
 
-    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection, boolean useTestDoiQueries) {
+    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection,
+            boolean useTestDoiQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(), useTestDoiQueries ? "/affected_journey_patterns_by_stops_test.sql" : "/affected_journey_patterns_by_stops.sql");
+        queryString = QueryUtils.createQuery(getClass(),
+                useTestDoiQueries
+                        ? "/affected_journey_patterns_by_stops_test.sql"
+                        : "/affected_journey_patterns_by_stops.sql");
         timeZone = context.getConfig().getString("omm.timezone");
         queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
     }
 
-    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestDoiQueries) throws SQLException {
+    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context,
+            String jdbcConnectionString, boolean useTestDoiQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
         return new DoiAffectedJourneyPatternSource(context, connection, useTestDoiQueries);
     }
@@ -46,16 +51,13 @@ public class DoiAffectedJourneyPatternSource {
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
         String affectedStops = closedStops.stream().map(sc -> sc.stopGid).collect(Collectors.joining(","));
-        String preparedQueryString = queryString
-                .replaceAll("VAR_DATE_NOW", dateNow)
-                .replace("VAR_TO_DATE", dateTo)
+        String preparedQueryString = queryString.replaceAll("VAR_DATE_NOW", dateNow).replace("VAR_TO_DATE", dateTo)
                 .replace("VAR_AFFECTED_STOP_GIDS", affectedStops);
 
         try (PreparedStatement statement = dbConnection.prepareStatement(preparedQueryString)) {
             ResultSet resultSet = statement.executeQuery();
             return parseAffectedJourneyPatterns(resultSet);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error while  querying and processing messages", e);
             throw e;
         }
@@ -76,7 +78,8 @@ public class DoiAffectedJourneyPatternSource {
                         int jpPointCount = resultSet.getInt("JP_PointCount");
                         affectedJourneyPatterns.put(jpId, new JourneyPattern(jpId, jpPointCount));
                     }
-                    affectedJourneyPatterns.get(jpId).addStop(new JourneyPatternStop(stopGid, stopId, stopName, stopSequence));
+                    affectedJourneyPatterns.get(jpId)
+                            .addStop(new JourneyPatternStop(stopGid, stopId, stopName, stopSequence));
                 } else {
                     log.warn("found null stopId with sequence {} for jpId {}", stopSequence, jpId);
                 }

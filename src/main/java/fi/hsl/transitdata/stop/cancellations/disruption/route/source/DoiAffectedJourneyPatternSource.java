@@ -18,18 +18,24 @@ public class DoiAffectedJourneyPatternSource {
     private final String queryString;
     private final String timeZone;
 
-    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection, boolean useTestDoiQueries) {
+    private DoiAffectedJourneyPatternSource(PulsarApplicationContext context, Connection connection,
+            boolean useTestDoiQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(), useTestDoiQueries ? "/affected_journey_patterns_by_ids_test.sql" : "/affected_journey_patterns_by_ids.sql");
+        queryString = QueryUtils.createQuery(getClass(),
+                useTestDoiQueries
+                        ? "/affected_journey_patterns_by_ids_test.sql"
+                        : "/affected_journey_patterns_by_ids.sql");
         timeZone = context.getConfig().getString("omm.timezone");
     }
 
-    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestDoiQueries) throws SQLException {
+    public static DoiAffectedJourneyPatternSource newInstance(PulsarApplicationContext context,
+            String jdbcConnectionString, boolean useTestDoiQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
         return new DoiAffectedJourneyPatternSource(context, connection, useTestDoiQueries);
     }
 
-    public Map<String, JourneyPattern> queryByJourneyPatternIds(Collection<String> journeyPatternIds) throws SQLException {
+    public Map<String, JourneyPattern> queryByJourneyPatternIds(Collection<String> journeyPatternIds)
+            throws SQLException {
         if (journeyPatternIds.isEmpty()) {
             log.info("Journey pattern ID list is empty, not querying journey patterns from database");
             return Collections.emptyMap();
@@ -38,9 +44,8 @@ public class DoiAffectedJourneyPatternSource {
         log.info("Querying journey patterns by disruption routes from database");
         String dateNow = QueryUtils.localDateAsString(Instant.now(), timeZone);
         String queryJourneyPatternIds = String.join(",", journeyPatternIds);
-        String preparedQueryString = queryString
-                .replaceAll("VAR_DATE_NOW", dateNow)
-                .replace("VAR_JP_IDS", queryJourneyPatternIds);
+        String preparedQueryString = queryString.replaceAll("VAR_DATE_NOW", dateNow).replace("VAR_JP_IDS",
+                queryJourneyPatternIds);
 
         try (PreparedStatement statement = dbConnection.prepareStatement(preparedQueryString)) {
             ResultSet resultSet = statement.executeQuery();
