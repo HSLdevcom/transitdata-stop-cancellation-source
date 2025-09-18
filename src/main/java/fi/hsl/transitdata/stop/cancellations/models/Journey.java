@@ -11,7 +11,8 @@ public class Journey {
     private final String startTime;
     public final String journeyPatternId;
 
-    public Journey(String tripid, String operatingDay, String routeName, int direction, String startTime, String journeyPatternId) {
+    public Journey(String tripid, String operatingDay, String routeName, int direction, String startTime,
+            String journeyPatternId) {
         this.tripId = tripid;
         this.operatingDay = operatingDay;
         this.routeName = routeName;

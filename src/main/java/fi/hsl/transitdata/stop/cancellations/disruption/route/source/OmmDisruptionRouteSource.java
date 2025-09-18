@@ -24,11 +24,13 @@ public class OmmDisruptionRouteSource {
 
     private OmmDisruptionRouteSource(Connection connection, String timezone, boolean useTestOmmQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(), useTestOmmQueries ? "/disruption_routes_test.sql" : "/disruption_routes.sql");
+        queryString = QueryUtils.createQuery(getClass(),
+                useTestOmmQueries ? "/disruption_routes_test.sql" : "/disruption_routes.sql");
         this.timezone = timezone;
     }
 
-    public static OmmDisruptionRouteSource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestOmmQueries) throws SQLException {
+    public static OmmDisruptionRouteSource newInstance(PulsarApplicationContext context, String jdbcConnectionString,
+            boolean useTestOmmQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
         final String timezone = context.getConfig().getString("omm.timezone");
         return new OmmDisruptionRouteSource(connection, timezone, useTestOmmQueries);
@@ -48,7 +50,8 @@ public class OmmDisruptionRouteSource {
         }
     }
 
-    private List<DisruptionRoute> parseDisruptionRoutes(ResultSet resultSet, Map<String, Stop> stopsByGid) throws SQLException {
+    private List<DisruptionRoute> parseDisruptionRoutes(ResultSet resultSet, Map<String, Stop> stopsByGid)
+            throws SQLException {
         List<DisruptionRoute> disruptionRoutes = new ArrayList<>();
         log.info("Processing disruptionRoutes resultset");
         while (resultSet.next()) {
@@ -61,12 +64,14 @@ public class OmmDisruptionRouteSource {
                 String endStopId = stopsByGid.containsKey(startStopGid) ? stopsByGid.get(endStopGid).stopId : "";
 
                 String affectedRoutes = resultSet.getString("AFFECTED_ROUTE_IDS");
-                List<String> affectedRoutesList = Arrays.stream(affectedRoutes.split(",")).map(String::trim).collect(Collectors.toList());
+                List<String> affectedRoutesList = Arrays.stream(affectedRoutes.split(",")).map(String::trim)
+                        .collect(Collectors.toList());
 
                 String validFrom = resultSet.getString("DC_VALID_FROM");
                 String validTo = resultSet.getString("DC_VALID_TO");
 
-                disruptionRoutes.add(new DisruptionRoute(disruptionRouteId, startStopId, endStopId, affectedRoutesList, validFrom, validTo, timezone));
+                disruptionRoutes.add(new DisruptionRoute(disruptionRouteId, startStopId, endStopId, affectedRoutesList,
+                        validFrom, validTo, timezone));
 
                 String name = resultSet.getString("NAME");
                 String description = resultSet.getString("DESCRIPTION");

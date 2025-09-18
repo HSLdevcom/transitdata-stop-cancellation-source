@@ -20,32 +20,35 @@ public class ClosedStopHandler {
     final DoiAffectedJourneyPatternSource affectedJourneyPatternSource;
     final DoiAffectedJourneySource affectedJourneySource;
 
-    public ClosedStopHandler(PulsarApplicationContext context, String ommConnString, String doiConnString, boolean useTestDoiQueries, boolean useTestOmmQueries) throws SQLException {
+    public ClosedStopHandler(PulsarApplicationContext context, String ommConnString, String doiConnString,
+            boolean useTestDoiQueries, boolean useTestOmmQueries) throws SQLException {
         closedStopSource = OmmClosedStopSource.newInstance(context, ommConnString, useTestOmmQueries);
-        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString, useTestDoiQueries);
+        affectedJourneyPatternSource = DoiAffectedJourneyPatternSource.newInstance(context, doiConnString,
+                useTestDoiQueries);
         affectedJourneySource = DoiAffectedJourneySource.newInstance(context, doiConnString, useTestDoiQueries);
     }
 
-    public Optional<InternalMessages.StopCancellations> queryAndProcessResults(DoiStopInfoSource doiStops) throws SQLException{
+    public Optional<InternalMessages.StopCancellations> queryAndProcessResults(DoiStopInfoSource doiStops)
+            throws SQLException {
         List<ClosedStop> closedStops = closedStopSource.queryAndProcessResults(doiStops.getDoiStopInfo());
 
-        Map<String, JourneyPattern> affectedJourneyPatternById = affectedJourneyPatternSource.queryByClosedStops(closedStops);
-        Map<String, List<Journey>> affectedJourneysByJourneyPatternId = affectedJourneySource.queryByJourneyPatternIds(affectedJourneyPatternById.keySet());
+        Map<String, JourneyPattern> affectedJourneyPatternById = affectedJourneyPatternSource
+                .queryByClosedStops(closedStops);
+        Map<String, List<Journey>> affectedJourneysByJourneyPatternId = affectedJourneySource
+                .queryByJourneyPatternIds(affectedJourneyPatternById.keySet());
         addAffectedJourneysToJourneyPatterns(affectedJourneyPatternById, affectedJourneysByJourneyPatternId);
         addAffectedJourneyPatternsToClosedStops(closedStops, affectedJourneyPatternById);
         return createStopCancellationsMessage(closedStops, affectedJourneyPatternById.values());
     }
 
-    public static void addAffectedJourneysToJourneyPatterns(
-            Map<String, JourneyPattern> affectedJourneyPatternMap,
+    public static void addAffectedJourneysToJourneyPatterns(Map<String, JourneyPattern> affectedJourneyPatternMap,
             Map<String, List<Journey>> affectedJourneysMap) {
         for (Map.Entry<String, List<Journey>> entry : affectedJourneysMap.entrySet()) {
             affectedJourneyPatternMap.get(entry.getKey()).addAffectedJourneys(entry.getValue());
         }
     }
 
-    public static void addAffectedJourneyPatternsToClosedStops(
-            List<ClosedStop> closedStops,
+    public static void addAffectedJourneyPatternsToClosedStops(List<ClosedStop> closedStops,
             Map<String, JourneyPattern> affectedJourneyPatternMap) {
         for (ClosedStop closedStop : closedStops) {
             for (JourneyPattern journeyPattern : affectedJourneyPatternMap.values()) {
@@ -57,11 +60,14 @@ public class ClosedStopHandler {
 
     }
 
-    public static Optional<InternalMessages.StopCancellations> createStopCancellationsMessage(Collection<ClosedStop> closedStops, Collection<JourneyPattern> journeyPatterns)  {
+    public static Optional<InternalMessages.StopCancellations> createStopCancellationsMessage(
+            Collection<ClosedStop> closedStops, Collection<JourneyPattern> journeyPatterns) {
         if (!closedStops.isEmpty()) {
             InternalMessages.StopCancellations.Builder builder = InternalMessages.StopCancellations.newBuilder();
-            builder.addAllStopCancellations(closedStops.stream().map(ClosedStop::getAsProtoBuf).collect(Collectors.toList()));
-            builder.addAllAffectedJourneyPatterns(journeyPatterns.stream().map(JourneyPattern::getAsProtoBuf).collect(Collectors.toList()));
+            builder.addAllStopCancellations(
+                    closedStops.stream().map(ClosedStop::getAsProtoBuf).collect(Collectors.toList()));
+            builder.addAllAffectedJourneyPatterns(
+                    journeyPatterns.stream().map(JourneyPattern::getAsProtoBuf).collect(Collectors.toList()));
             return Optional.of(builder.build());
         } else {
             return Optional.empty();

@@ -51,8 +51,10 @@ public class Main {
 
             final DoiStopInfoSource doiStops = DoiStopInfoSource.newInstance(context, connString, useTestDoiQueries);
 
-            final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, connString, connString, useTestDoiQueries, useTestOmmQueries);
-            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, connString, connString, useTestDoiQueries, useTestOmmQueries);
+            final ClosedStopHandler closedStopHandler = new ClosedStopHandler(context, connString, connString,
+                    useTestDoiQueries, useTestOmmQueries);
+            final DisruptionRouteHandler disruptionRouteHandler = new DisruptionRouteHandler(context, connString,
+                    connString, useTestDoiQueries, useTestOmmQueries);
 
             final StopCancellationPublisher publisher = new StopCancellationPublisher(context);
 
@@ -60,17 +62,18 @@ public class Main {
             scheduler.scheduleAtFixedRate(() -> {
                 try {
                     //Query closed stops, affected journey patterns and affected journeys
-                    final Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopsEnabled ?
-                            closedStopHandler.queryAndProcessResults(doiStops) :
-                            Optional.empty();
-                    
+                    final Optional<InternalMessages.StopCancellations> stopCancellationsClosed = closedStopsEnabled
+                            ? closedStopHandler.queryAndProcessResults(doiStops)
+                            : Optional.empty();
+
                     //Query disruption routes and affected journeys
-                    final Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteEnabled ?
-                            disruptionRouteHandler.queryAndProcessResults(doiStops) :
-                            Optional.empty();
+                    final Optional<InternalMessages.StopCancellations> stopCancellationsJourneyPatternDetour = disruptionRouteEnabled
+                            ? disruptionRouteHandler.queryAndProcessResults(doiStops)
+                            : Optional.empty();
 
                     //Stop cancellation message should be sent even if there are no cancellations so that cancellation-of-cancellation works in the processor
-                    publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(Arrays.asList(stopCancellationsClosed, stopCancellationsJourneyPatternDetour))));
+                    publisher.sendStopCancellations(mergeStopCancellations(unwrapOptionals(
+                            Arrays.asList(stopCancellationsClosed, stopCancellationsJourneyPatternDetour))));
                 } catch (PulsarClientException e) {
                     log.error("Pulsar connection error", e);
                     closeApplication(finalApp, scheduler);
@@ -92,40 +95,40 @@ public class Main {
         return optionals.stream().filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
     }
 
-    private static InternalMessages.StopCancellations mergeStopCancellations(Collection<InternalMessages.StopCancellations> stopCancellationMessages) {
-        InternalMessages.StopCancellations.Builder stopCancellationsBuilder = InternalMessages.StopCancellations.newBuilder();
+    private static InternalMessages.StopCancellations mergeStopCancellations(
+            Collection<InternalMessages.StopCancellations> stopCancellationMessages) {
+        InternalMessages.StopCancellations.Builder stopCancellationsBuilder = InternalMessages.StopCancellations
+                .newBuilder();
 
         //Merge journey patterns from all stop cancellation messages
-        final Collection<InternalMessages.JourneyPattern> combinedJourneyPatterns = combineTripsOfJourneyPatterns(stopCancellationMessages.stream()
-                .map(InternalMessages.StopCancellations::getAffectedJourneyPatternsList)
-                .flatMap(List::stream)
-                //There may be multiple journey patterns with same ID, but they all should include same trips
-                .collect(Collectors.groupingBy(InternalMessages.JourneyPattern::getJourneyPatternId)));
+        final Collection<InternalMessages.JourneyPattern> combinedJourneyPatterns = combineTripsOfJourneyPatterns(
+                stopCancellationMessages.stream()
+                        .map(InternalMessages.StopCancellations::getAffectedJourneyPatternsList).flatMap(List::stream)
+                        //There may be multiple journey patterns with same ID, but they all should include same trips
+                        .collect(Collectors.groupingBy(InternalMessages.JourneyPattern::getJourneyPatternId)));
 
         combinedJourneyPatterns.forEach(stopCancellationsBuilder::addAffectedJourneyPatterns);
 
         //Collect stop cancellations from all stop cancellation messages
-        stopCancellationMessages.stream()
-                .map(InternalMessages.StopCancellations::getStopCancellationsList)
-                .flatMap(List::stream)
-                .forEach(stopCancellationsBuilder::addStopCancellations);
+        stopCancellationMessages.stream().map(InternalMessages.StopCancellations::getStopCancellationsList)
+                .flatMap(List::stream).forEach(stopCancellationsBuilder::addStopCancellations);
 
         return stopCancellationsBuilder.build();
     }
 
     // combines affected trips of one or more journeyPattern(s) by adding their unique trips to a single returned journeyPattern
     //TODO: simplify SQL queries so that this would not be necessary
-    private static Collection<InternalMessages.JourneyPattern> combineTripsOfJourneyPatterns(Map<String, List<InternalMessages.JourneyPattern>> journeyPatternById) {
+    private static Collection<InternalMessages.JourneyPattern> combineTripsOfJourneyPatterns(
+            Map<String, List<InternalMessages.JourneyPattern>> journeyPatternById) {
         return journeyPatternById.entrySet().stream().map(journeyPatternsWithId -> {
-            InternalMessages.JourneyPattern.Builder journeyPatternBuilder = InternalMessages.JourneyPattern.newBuilder();
+            InternalMessages.JourneyPattern.Builder journeyPatternBuilder = InternalMessages.JourneyPattern
+                    .newBuilder();
             journeyPatternBuilder.setJourneyPatternId(journeyPatternsWithId.getKey());
             //Add list of stops from the first journey pattern
             journeyPatternBuilder.addAllStops(journeyPatternsWithId.getValue().get(0).getStopsList());
             //Get set of trips from all journey patterns
             journeyPatternBuilder.addAllTrips(journeyPatternsWithId.getValue().stream()
-                    .flatMap(journeyPattern -> journeyPattern.getTripsList().stream())
-                    .collect(Collectors.toSet())
-            );
+                    .flatMap(journeyPattern -> journeyPattern.getTripsList().stream()).collect(Collectors.toSet()));
 
             return journeyPatternBuilder.build();
         }).collect(Collectors.toList());
@@ -143,8 +146,7 @@ public class Main {
 
     private static String readConnString(String envVar, String secretName) throws Exception {
         //Default path is what works with Docker out-of-the-box. Override with a local file if needed
-        final String secretFilePath = ConfigUtils.getEnv(envVar)
-                .orElse("/run/secrets/" + secretName);
+        final String secretFilePath = ConfigUtils.getEnv(envVar).orElse("/run/secrets/" + secretName);
 
         String connectionString = "";
         try (Scanner scanner = new Scanner(new File(secretFilePath)).useDelimiter("\\Z")) {

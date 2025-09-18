@@ -19,15 +19,20 @@ public class DoiAffectedJourneySource {
     private final String timeZone;
     private final int queryFutureInDays;
 
-    private DoiAffectedJourneySource(PulsarApplicationContext context, Connection connection, boolean useTestDoiQueries) {
+    private DoiAffectedJourneySource(PulsarApplicationContext context, Connection connection,
+            boolean useTestDoiQueries) {
         dbConnection = connection;
-        queryString = QueryUtils.createQuery(getClass(),useTestDoiQueries ? "/affected_journeys_by_disruption_routes_test.sql" : "/affected_journeys_by_disruption_routes.sql");
+        queryString = QueryUtils.createQuery(getClass(),
+                useTestDoiQueries
+                        ? "/affected_journeys_by_disruption_routes_test.sql"
+                        : "/affected_journeys_by_disruption_routes.sql");
         timeZone = context.getConfig().getString("omm.timezone");
         queryFutureInDays = context.getConfig().getInt("doi.queryFutureJourneysInDays");
         log.info("Using {} future days in querying affected journeys", queryFutureInDays);
     }
 
-    public static DoiAffectedJourneySource newInstance(PulsarApplicationContext context, String jdbcConnectionString, boolean useTestDoiQueries) throws SQLException {
+    public static DoiAffectedJourneySource newInstance(PulsarApplicationContext context, String jdbcConnectionString,
+            boolean useTestDoiQueries) throws SQLException {
         Connection connection = DriverManager.getConnection(jdbcConnectionString);
         return new DoiAffectedJourneySource(context, connection, useTestDoiQueries);
     }
@@ -38,15 +43,13 @@ public class DoiAffectedJourneySource {
         String dateTo = QueryUtils.getOffsetDateAsString(Instant.now(), timeZone, queryFutureInDays);
         String preparedString = queryString
                 .replace("VAR_AFFECTED_ROUTE_IDS", String.join(",", disruptionRoute.affectedRoutes))
-                .replace("VAR_DATE_FROM", dateFrom)
-                .replace("VAR_DATE_TO", dateTo)
+                .replace("VAR_DATE_FROM", dateFrom).replace("VAR_DATE_TO", dateTo)
                 .replace("VAR_MIN_DEP_TIME", disruptionRoute.getValidFrom().orElse(dateFrom))
-                .replace("VAR_MAX_DEP_TIME",  disruptionRoute.getValidTo().orElse(dateTo));
+                .replace("VAR_MAX_DEP_TIME", disruptionRoute.getValidTo().orElse(dateTo));
         try (PreparedStatement statement = dbConnection.prepareStatement(preparedString)) {
             ResultSet resultSet = statement.executeQuery();
             return parseJourneys(resultSet);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error while  querying and processing affected journeys by disruption routes", e);
             throw e;
         }
@@ -63,7 +66,8 @@ public class DoiAffectedJourneySource {
                 int direction = resultSet.getInt("DIRECTION");
                 String startTime = resultSet.getString("START_TIME");
                 String journeyPatternId = resultSet.getString("JP_Id");
-                Journey affectedJourney = new Journey(tripId, operatingDay, routeName, direction, startTime, journeyPatternId);
+                Journey affectedJourney = new Journey(tripId, operatingDay, routeName, direction, startTime,
+                        journeyPatternId);
                 journeys.add(affectedJourney);
             } catch (IllegalArgumentException iae) {
                 log.error("Error while parsing affected journeys resultset", iae);
